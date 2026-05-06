@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import "./my-game.styles.css";
 
 interface MyGameComponentProps {
-  game: Game;
+  game?: Game;
 }
 
 const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
@@ -550,7 +550,7 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
           resultModalDelayMs={1000}
         >
           <MyGameWindow
-            game={game}
+            game={safeGame}
             phase={gameState.phase}
             playerCards={gameState.playerCards}
             dealerCards={gameState.dealerCards}
@@ -568,7 +568,7 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
         </GameWindow>
 
         <MyGameSetupCard
-          game={game}
+          game={safeGame}
           onPlay={async () => await playGame()}
           onSpin={handleStateAdvance}
           onRewatch={handleRewatch}
