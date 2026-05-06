@@ -16,7 +16,7 @@ interface CardHistoryEntry {
     outcome: "start" | "win" | "loss" | "skip";
 }
 
-interface hiloWindowProps {
+interface MyGameWindowProps {
     currentCard: Card | null;
     revealedCard: Card | null;
     isSfxMuted: boolean;
@@ -50,7 +50,7 @@ interface hiloWindowProps {
 
 const isRedSuit = (card: Card) => card.suit === "hearts" || card.suit === "diamonds";
 
-const hiloWindow: React.FC<hiloWindowProps> = ({
+const MyGameWindow: React.FC<MyGameWindowProps> = ({
     currentCard,
     revealedCard,
     isSfxMuted,
@@ -271,6 +271,7 @@ const hiloWindow: React.FC<hiloWindowProps> = ({
     const higherPayout = higherDisplay.multiplier > 0 ? runningAmount * higherDisplay.multiplier : 0;
     const topCard = revealedCard ?? currentCard;
     const topCardKey = topCard ? `${topCard.rank}-${topCard.suit}` : "hidden";
+    const shouldCenterHistory = history.length <= 2;
     const latestOutcome = history.length > 0 ? history[history.length - 1].outcome : null;
     const topCardResultFlash =
         revealedCard && (latestOutcome === "win" || latestOutcome === "loss")
@@ -426,7 +427,7 @@ const hiloWindow: React.FC<hiloWindowProps> = ({
             <div className={"hilo-history-row"}>
                 <div
                     ref={historyScrollRef}
-                    className={"hilo-history-scroll"}
+                    className={`${"hilo-history-scroll"} ${shouldCenterHistory ? "hilo-history-scroll-centered" : ""}`}
                     onPointerDown={handleHistoryPointerDown}
                     onPointerMove={handleHistoryPointerMove}
                     onPointerUp={handleHistoryPointerUp}
@@ -567,4 +568,5 @@ const CardFace: React.FC<{
     );
 };
 
-export default hiloWindow;
+export default MyGameWindow;
+

@@ -9,7 +9,7 @@ export const myGame: Game = {
     banner: "/submissions/hilo/banner.png",
     advanceToNextStateAsset: "/submissions/hilo/advance-button.png",
     themeColorBackground: "#22c55e",
-    song: "/submissions/hilo/audio/casino_background.mp3",
+    song: "/submissions/hilo/audio/song.mp3",
     payouts: {
         0: { 0: { 0: 10000 } },
     },
@@ -18,7 +18,7 @@ export const myGame: Game = {
 export type GuessDirection = "higher" | "lower" | "same";
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
 
-export const HOUSE_EDGE = 0.9885;
+export const HOUSE_EDGE = 0.98;
 export const TOTAL_RANKS = 13;
 
 export interface Card {

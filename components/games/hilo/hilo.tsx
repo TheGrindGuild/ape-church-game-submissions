@@ -4,8 +4,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import GameWindow from "@/components/shared/GameWindow";
-import HiloWindow from "./hiloWindow";
-import HiloSetupCard from "./hiloSetupCard";
+import MyGameWindow from "./hiloWindow";
+import MyGameSetupCard from "./hiloSetupCard";
 import { bytesToHex } from "viem";
 import { randomBytes, Game } from "@/lib/games";
 import "./hilo.style.css";
@@ -18,7 +18,10 @@ import {
     getRankOutcomes,
     getStepMultiplier,
 } from "./hiloConfig";
-import { myGame as hiloGame } from "./hiloConfig";
+
+interface MyGameProps {
+    game: Game;
+}
 
 interface CardHistoryEntry {
     card: Card;
@@ -85,9 +88,7 @@ const toSafePositiveInt = (value: number, fallback = 1, maxValue = Number.POSITI
     return Math.min(maxValue, Math.max(1, Math.floor(value)));
 };
 
-const MyGame: React.FC = () => {
-    const game: Game = hiloGame;
-    
+const MyGame: React.FC<MyGameProps> = ({ game }) => {
     const searchParams = useSearchParams();
     const replayId = searchParams.get("id");
 
@@ -1168,7 +1169,7 @@ const MyGame: React.FC = () => {
                 onMusicMutedChange={setIsMusicMuted}
                 onSfxMutedChange={setIsSfxMuted}
             >
-                <HiloWindow
+                <MyGameWindow
                     currentCard={roundState.currentCard}
                     revealedCard={roundState.revealedCard}
                     isSfxMuted={isSfxMuted}
@@ -1201,7 +1202,7 @@ const MyGame: React.FC = () => {
                 />
             </GameWindow>
 
-            <HiloSetupCard
+            <MyGameSetupCard
                 currentView={currentView}
                 betAmount={betAmount}
                 setBetAmount={hasActivePackage ? () => {} : setBetAmount}
