@@ -9,10 +9,7 @@ import { toast } from "sonner";
 import { Howl } from "howler";
 import MyGameSetupCard from "./MyGameSetupCard";
 import MyGameWindow from "./MyGameWindow";
-
-interface MyGameComponentProps {
-    game: Game;
-}
+import { myGame } from "./myGameConfig";
 
 interface LastRoundSnapshot {
     betAmount: number;
@@ -42,7 +39,8 @@ const roundToTwoDecimals = (value: number): number =>
 const clamp = (value: number, min: number, max: number): number =>
     Math.max(min, Math.min(max, value));
 
-const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
+const MyGameComponent: React.FC = () => {
+    const game = myGame;
     const router = useRouter();
     const [replayIdString, setReplayIdString] = useState<string | null>(null);
     const inReplayMode = replayIdString !== null;
