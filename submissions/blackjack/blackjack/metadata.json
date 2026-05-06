@@ -1,6 +1,6 @@
 {
   "team": "web3-wizards",
-  "gameName": "w3w-blackjack",
+  "gameName": "blackjack",
   "displayTitle": "Web3Wizards Blackjack",
   "description": "A classic Blackjack game where you play against the dealer. Hit, stand, and try to reach 21 without busting. Place your bet and test your luck.",
   "authors": [
@@ -24,8 +24,8 @@
     "card",
     "casino"
   ],
-  "thumbnail": "/w3w-blackjack/card.png",
-  "banner": "/w3w-blackjack/banner.png",
+  "thumbnail": "/blackjack/card.png",
+  "banner": "/blackjack/banner.png",
   "mainComponent": "MyGame.tsx",
   "windowComponent": "MyGameWindow.tsx",
   "setupComponent": "MyGameSetupCard.tsx",
