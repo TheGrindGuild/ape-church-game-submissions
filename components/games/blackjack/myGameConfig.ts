@@ -9,6 +9,7 @@ export const myGame: Game = {
   banner: "/submissions/blackjack/banner.png",
   advanceToNextStateAsset: "/submissions/blackjack/advance-button.png",
   themeColorBackground: "#0F7B45",
+  song: "/submissions/blackjack/audio/song.mp3",
   payouts: {
     0: {
       0: { 0: 20000 },
