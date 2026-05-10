@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BOARD_TILE_COUNT, BOARD_COLUMNS } from "./minesConfig";
@@ -364,4 +364,3 @@ const MinesWindow: React.FC<MinesWindowProps> = ({
 };
 
 export default MinesWindow;
-
