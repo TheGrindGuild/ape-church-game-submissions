@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Info } from "lucide-react";
+import { CircleHelp, Info } from "lucide-react";
 import { Game } from "@/lib/games";
 import BetAmountInput from "@/components/shared/BetAmountInput";
 import { CustomSlider } from "@/components/shared/CustomSlider";
@@ -40,10 +40,10 @@ interface MyGameSetupCardProps {
     maxBet: number;
     isGameOngoing: boolean;
     crashAt: number | null;
-    introSplashActive?: boolean;
     playCurrency: "ape" | "gp";
     onPlayCurrencyChange: (currency: "ape" | "gp") => void;
     currencySwitchDisabled: boolean;
+    onOpenRules?: () => void;
 }
 
 const AUTO_CASHOUT_INFO =
@@ -78,10 +78,10 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
     minBet,
     isGameOngoing,
     crashAt,
-    introSplashActive = false,
     playCurrency,
     onPlayCurrencyChange,
     currencySwitchDisabled,
+    onOpenRules,
 }) => {
     const themeColorBackground = BRAND_PRIMARY;
     const tokenLabel = playCurrency === "ape" ? "APE" : "GP";
@@ -249,64 +249,46 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
                 boxShadow: "0 0 30px rgba(0, 229, 255, 0.18)",
             }}
         >
-            <div className="mb-5 flex items-center justify-between rounded-md border border-[#7FFFD444] bg-[#07131B]/75 px-3 py-2">
-                <div>
-                    <p className="text-sm font-bold tracking-[0.06em] text-[#ECFFFB]">{game.title}</p>
-                    {introSplashActive && currentView === 0 ? (
-                        <>
-                            <p className="mt-2 text-lg font-black uppercase tracking-[0.08em] text-[#7FFFD4]">
-                                How To Play
-                            </p>
-                            <p className="mt-1 text-xs leading-relaxed text-[#8AD9E8]">
-                                Read the rules, then tap{" "}
-                                <span className="font-semibold text-[#C9FFF3]">Agree &amp; Play</span>{" "}
-                                on the game screen to set your bet and play.
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <div className="mt-2 text-3xl font-black tracking-[0.06em] text-[#7FFFD4] drop-shadow-[0_0_18px_rgba(127,255,212,0.5)]">
-                                {multiplier.toFixed(2)}x
-                            </div>
-                            <div className="mt-1 text-xs uppercase tracking-[0.09em] text-[#D8FFF6]">
-                                {statusText}
-                            </div>
-                            <div className="mt-1 flex gap-3 text-[11px] text-[#98C9D3]">
-                                <span>{secondsText}</span>
-                                <span>Crash @{crashAt ? `${crashAt.toFixed(2)}x` : "--"}</span>
-                            </div>
-                        </>
-                    )}
-                </div>
-                <img
-                    src="/submissions/jnkyz-skate-or-crash/ui/jnkyz-logo-white.png"
-                    alt="JNKYZ"
-                    className="h-8 w-8 rounded-xl border border-[#7FFFD455] bg-transparent p-1 object-contain mix-blend-normal opacity-100"
-                />
-            </div>
-            {currentView === 0 && introSplashActive ? (
-                <>
-                    <CardContent className="font-roboto grow">
-                        <ul className="space-y-2.5 text-sm text-white/90">
-                            <li>1. Choose <span className="font-semibold">ApeCoin</span> or{" "}
-                                <span className="font-semibold">GP</span> (game points), set your bet, and optional
-                                auto-cashout.</li>
-                            <li>
-                                2. Press <span className="font-semibold">Place Your Bet</span> to start
-                                the run.
-                            </li>
-                            <li>3. Multiplier rises while Wade skates — cash out before crash.</li>
-                            <li>4. If crash happens first, you lose that round&apos;s bet.</li>
-                            <li>5. Use Play Again, Rewatch, or Change Bet after each round.</li>
-                        </ul>
-                        <p className="mt-4 text-xs text-[#8AD9E8]">
-                            Tip: Auto Cashout locks profit automatically at your target multiplier.
+            <div className="mb-5 rounded-md border border-[#7FFFD444] bg-[#07131B]/75 px-3 py-2.5">
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold tracking-[0.06em] text-[#ECFFFB]">
+                            {game.title}
                         </p>
-                    </CardContent>
-                    <div className="grow" />
-                </>
-            ) : null}
-            {currentView === 0 && !introSplashActive ? (
+                        <div className="mt-2 text-3xl font-black tracking-[0.06em] text-[#7FFFD4] drop-shadow-[0_0_18px_rgba(127,255,212,0.5)]">
+                            {multiplier.toFixed(2)}x
+                        </div>
+                        <div className="mt-1 text-xs uppercase tracking-[0.09em] text-[#D8FFF6]">
+                            {statusText}
+                        </div>
+                        <div className="mt-1 flex gap-3 text-[11px] text-[#98C9D3]">
+                            <span>{secondsText}</span>
+                            <span>
+                                Crash @{crashAt ? `${crashAt.toFixed(2)}x` : "--"}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                        {onOpenRules ? (
+                            <button
+                                type="button"
+                                onClick={onOpenRules}
+                                className="flex h-7 w-7 items-center justify-center rounded-md border border-[#7FFFD433] text-[#8AD9E8] transition hover:border-[#7FFFD466] hover:bg-[#7FFFD4]/10 hover:text-[#C9FFF3]"
+                                title="How to play"
+                                aria-label="How to play"
+                            >
+                                <CircleHelp className="h-3.5 w-3.5" />
+                            </button>
+                        ) : null}
+                        <img
+                            src="/submissions/jnkyz-skate-or-crash/ui/jnkyz-logo-white.png"
+                            alt="JNKYZ"
+                            className="h-8 w-8 rounded-xl border border-[#7FFFD455] bg-transparent p-1 object-contain mix-blend-normal opacity-100"
+                        />
+                    </div>
+                </div>
+            </div>
+            {currentView === 0 ? (
                 <>
                     <CardContent className="font-roboto">
                         <div className="mb-4 flex items-center justify-end gap-2 text-xs">
@@ -336,7 +318,6 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
                                 GP
                             </span>
                         </div>
-                        {/* place your bet button - mobile */}
                         <Button
                             onClick={onPlay}
                             className={`lg:hidden ${primaryButtonClass}`}

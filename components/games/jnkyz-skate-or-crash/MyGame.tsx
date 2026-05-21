@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import GameWindow from "@/components/shared/GameWindow";
 import { Game, randomBytes } from "@/lib/games";
@@ -10,6 +10,7 @@ import { Howl } from "howler";
 import { Button } from "@/components/ui/button";
 import { AudioLines, Volume2, VolumeX } from "lucide-react";
 import MyGameSetupCard from "./MyGameSetupCard";
+import MyGameRulesModal from "./MyGameRulesModal";
 import MyGameWindow from "./MyGameWindow";
 
 interface MyGameComponentProps {
@@ -67,7 +68,7 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
     const [payout, setPayout] = useState<number | null>(null);
     const [didCashout, setDidCashout] = useState(false);
     const [elapsedMs, setElapsedMs] = useState(0);
-    const [splashDismissed, setSplashDismissed] = useState(false);
+    const [rulesOpen, setRulesOpen] = useState(false);
     const [sfxMuted, setSfxMuted] = useState(false);
     const [musicMuted, setMusicMuted] = useState(false);
     const [musicVolumeMultiplier, setMusicVolumeMultiplier] = useState(1);
@@ -85,6 +86,7 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
     const restoreMusicTimeoutRef = useRef<number | null>(null);
     const roundStartMsRef = useRef<number>(0);
     const roundEndedRef = useRef(false);
+    const rulesAutoOpenCheckedRef = useRef(false);
 
     useEffect(() => {
         playCurrencyRef.current = playCurrency;
@@ -111,6 +113,19 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
         }
         setCurrentGameId(BigInt(replayIdString));
     }, [replayIdString]);
+
+    useLayoutEffect(() => {
+        if (rulesAutoOpenCheckedRef.current || typeof window === "undefined") {
+            return;
+        }
+        rulesAutoOpenCheckedRef.current = true;
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("id")) {
+            return;
+        }
+        setRulesOpen(true);
+    }, []);
 
     useEffect(() => {
         const max = playCurrency === "ape" ? apeWallet : gpWallet;
@@ -432,9 +447,19 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
 
     const playAgainText = "Play Again";
     const showPNL = payout !== null && payout > betAmount;
+    const showStartSplash = currentView === 0;
+
+    const openRules = (): void => {
+        setRulesOpen(true);
+    };
 
     return (
         <div className="relative">
+            <MyGameRulesModal
+                isOpen={rulesOpen}
+                onClose={() => setRulesOpen(false)}
+            />
+
             <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 lg:gap-10">
                 <div className="relative w-full min-w-0 lg:basis-2/3">
                     <GameWindow
@@ -471,8 +496,21 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
                         />
                     </GameWindow>
 
-                    {!splashDismissed ? (
-                        <div className="absolute inset-0 z-[35] flex flex-col overflow-hidden rounded-[12px] bg-[#050a0e]">
+                    {showStartSplash ? (
+                        <div className="absolute inset-0 z-[35] overflow-hidden rounded-[12px]">
+                            <video
+                                className="absolute inset-0 h-full w-full object-cover"
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="auto"
+                            >
+                                <source
+                                    src="/submissions/jnkyz-skate-or-crash/splash-screen.webm"
+                                    type="video/webm"
+                                />
+                            </video>
                             <div className="absolute bottom-4 right-4 z-[40] flex items-center gap-2">
                                 <Button
                                     type="button"
@@ -503,31 +541,6 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
                                     )}
                                 </Button>
                             </div>
-                            <div className="min-h-0 flex-1">
-                                <video
-                                    className="h-full w-full object-contain"
-                                    autoPlay
-                                    loop
-                                    muted
-                                    playsInline
-                                    preload="auto"
-                                >
-                                    <source
-                                        src="/submissions/jnkyz-skate-or-crash/splash-screen.webm"
-                                        type="video/webm"
-                                    />
-                                </video>
-                            </div>
-                            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#050a0e] to-transparent sm:h-36" />
-                            <div className="absolute inset-x-0 bottom-0 flex justify-center px-4 pb-5 pt-4 sm:pb-7">
-                                <button
-                                    type="button"
-                                    onClick={() => setSplashDismissed(true)}
-                                    className="min-w-[180px] rounded-md border border-[#7FFFD4]/40 bg-[#7FFFD4] px-6 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[#042d28] shadow-[0_0_24px_rgba(127,255,212,0.35)] transition hover:opacity-95 active:scale-[0.98] sm:px-8 sm:py-3 sm:text-sm"
-                                >
-                                    Agree &amp; Play
-                                </button>
-                            </div>
                         </div>
                     ) : null}
                 </div>
@@ -555,12 +568,12 @@ const MyGameComponent: React.FC<MyGameComponentProps> = ({ game }) => {
                     maxBet={walletBalance}
                     isGameOngoing={isGameOngoing}
                     crashAt={crashAt}
-                    introSplashActive={!splashDismissed}
                     playCurrency={playCurrency}
                     onPlayCurrencyChange={setPlayCurrency}
                     currencySwitchDisabled={
                         isLoading || isGameOngoing || currentView !== 0
                     }
+                    onOpenRules={openRules}
                 />
             </div>
         </div>
