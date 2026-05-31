@@ -490,7 +490,6 @@ const SwampHopComponent: React.FC<SwampHopComponentProps> = ({ game }) => {
                     showPNL={shouldShowPNL}
                     isGamePaused={false}
                     resultModalDelayMs={1000}
-                    backgroundImageClassName="opacity-100 object-cover object-bottom"
                 >
                     <SwampHopWindow
                         key={sessionKey}
