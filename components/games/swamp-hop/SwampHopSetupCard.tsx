@@ -61,10 +61,12 @@ interface SwampHopSetupCardProps {
 }
 
 const MAX_HOPS = 15;
-const JACKPOT_AMOUNT_INFO =
-    "Shrine Pad opens the Luma Shrine Bonus. Pick Safe, Wild, or Ancient for an extra blessing.";
+const SHRINE_PAD_INFO =
+    "Shrine Pad hops pay ~1.5× your bank, then open the Luma Shrine Bonus overlay.";
+const LUMA_BONUS_INFO =
+    "Pick Safe (+15%), Wild (+75% or −15%), or Ancient (3×, +40%, or no bonus). The Luma bonus never busts your run — only Croc Snap does.";
 const MAX_PROFIT_INFO =
-    "Maximum profit depends on your bet, hop path, and whether you cash out early.";
+    "Theoretical best-case profit if every hop hits a Shrine Pad and you finish all hops with the treasure bonus.";
 
 const SwampHopSetupCard: React.FC<SwampHopSetupCardProps> = ({
     game,
@@ -322,19 +324,31 @@ const SwampHopSetupCard: React.FC<SwampHopSetupCardProps> = ({
                     <CardFooter className="mt-8 w-full flex flex-col font-roboto">
                         <div className="w-full flex flex-col items-center gap-2 font-medium text-xs text-[#91989C]">
                             <div className="w-full flex justify-between items-center gap-2">
-                                <p>Shrine Jackpot</p>
-                                <p className="text-right">{jackpotMultiplier}x</p>
-                            </div>
-                            <div className="w-full flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-2">
-                                    <p>Max Shrine Payout</p>
+                                    <p>Shrine Pad Multiplier</p>
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
                                                 <Info size={16} />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>{JACKPOT_AMOUNT_INFO}</p>
+                                                <p>{SHRINE_PAD_INFO}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                                <p className="text-right">{jackpotMultiplier}x</p>
+                            </div>
+                            <div className="w-full flex justify-between items-center gap-2">
+                                <div className="flex items-center gap-2">
+                                    <p>Shrine Pad at Bet</p>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Info size={16} />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{LUMA_BONUS_INFO}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -402,8 +416,9 @@ const SwampHopSetupCard: React.FC<SwampHopSetupCardProps> = ({
                             Luma Shrine Bonus
                         </p>
                         <p className="text-sm text-[#91989C]">
-                            Choose your blessing in the game window, then return
-                            to hop or cash out.
+                            Pick Safe, Wild, or Ancient in the game window.
+                            Luma adjusts your bank — it never busts your run.
+                            Then hop again or cash out.
                         </p>
                     </div>
                 </CardContent>
@@ -458,9 +473,10 @@ const SwampHopSetupCard: React.FC<SwampHopSetupCardProps> = ({
                                     </span>
                                 </div>
                                 <p className="text-[10px] leading-snug pt-1">
-                                    Most players cash out after 1 to 3 hops.
-                                    Pushing further is high risk. Croc chance
-                                    rises after hop 6.
+                                    Croc Snap is the only full bust. Shrine Pads
+                                    open the Luma bonus (Safe +15%, Wild ±75%,
+                                    Ancient up to 3×). Croc chance rises after
+                                    hop 6.
                                 </p>
                             </div>
                         </div>

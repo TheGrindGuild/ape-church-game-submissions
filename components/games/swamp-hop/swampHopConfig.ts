@@ -2,9 +2,9 @@ import { Game } from "@/lib/games";
 
 /** Multiplier factors are stored as value / 10_000 (e.g. 15000 = 1.5x). */
 export const swampHop: Game = {
-    title: "Swamp Hop",
+    title: "Froglings Swamp Hop",
     description:
-        "Hop lily pad to lily pad with the frogling adventurer. Each hop grows your bank. One croc snap ends the run. Cash out early or keep pushing in Swamp Hop.",
+        "Hop lily pad to lily pad with the Froglings adventurer. Grow your bank each hop, cash out early, or land on a Shrine Pad for the Luma bonus pick. Only a Croc Snap busts your full bet.",
     gameAddress: "0x1234567890123456789012345678901234567890",
     gameBackground: "/submissions/swamp-hop/scenes/day.png",
     card: "/submissions/swamp-hop/card.png",

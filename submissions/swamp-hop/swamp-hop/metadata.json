@@ -1,8 +1,8 @@
 {
   "team": "swamp-hop",
   "gameName": "swamp-hop",
-  "displayTitle": "Swamp Hop",
-  "description": "Hop lily pad to lily pad with the frogling adventurer. Each hop grows your bank. One croc snap ends the run. Cash out early or keep pushing in Swamp Hop.",
+  "displayTitle": "Froglings Swamp Hop",
+  "description": "Hop lily pad to lily pad with the Froglings adventurer. Grow your bank each hop, cash out early, or land on a Shrine Pad for the Luma bonus pick. Only a Croc Snap busts your full bet.",
   "authors": [
     {
       "name": "Froglings",
@@ -19,7 +19,7 @@
   ],
   "status": "pending",
   "category": "arcade",
-  "tags": ["arcade", "swamp", "risk", "frog"],
+  "tags": ["arcade", "swamp", "risk", "frog", "froglings"],
   "thumbnail": "/swamp-hop/card.png",
   "banner": "/swamp-hop/banner.png",
   "mainComponent": "SwampHop.tsx",
