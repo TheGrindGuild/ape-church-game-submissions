@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BOARD_TILE_COUNT, BOARD_COLUMNS } from "./minesConfig";
@@ -43,7 +43,37 @@ interface ExplosionSpriteProps {
     showManualFireFrame: boolean;
 }
 
+const DIAMOND_SPIN_DURATION_MS = 380;
+
 type ExplosionPhase = "intro" | "playing" | "outro";
+
+const DiamondReveal: React.FC = () => {
+    const [showStaticDiamond, setShowStaticDiamond] = useState(false);
+
+    useEffect(() => {
+        const timeoutId = window.setTimeout(() => {
+            setShowStaticDiamond(true);
+        }, DIAMOND_SPIN_DURATION_MS);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, []);
+
+    return (
+        <>
+            {showStaticDiamond && (
+                <img
+                    src="/submissions/mines/diamond_2.png"
+                    alt="Diamond"
+                    className="mines-tile-icon mines-tile-gem"
+                    draggable={false}
+                />
+            )}
+            <div className="mines-diamond-sprite" aria-hidden="true" />
+        </>
+    );
+};
 
 const ExplosionSprite: React.FC<ExplosionSpriteProps> = ({
     src,
@@ -329,12 +359,18 @@ const MinesWindow: React.FC<MinesWindowProps> = ({
                             aria-label={`Tile ${i + 1}`}
                         >
                             {state === "gem" && (
-                                <img
-                                    src="/submissions/mines/diamond.svg"
-                                    alt="Diamond"
-                                    className="mines-tile-icon mines-tile-gem"
-                                    draggable={false}
-                                />
+                                <>
+                                    {revealAllTiles ? (
+                                        <img
+                                            src="/submissions/mines/diamond_2.png"
+                                            alt="Diamond"
+                                            className="mines-tile-icon mines-tile-gem"
+                                            draggable={false}
+                                        />
+                                    ) : (
+                                        <DiamondReveal />
+                                    )}
+                                </>
                             )}
                             {state === "exploded" && (
                                 <ExplosionSprite
