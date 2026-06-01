@@ -11,16 +11,14 @@ import MyGameWindow from './MyGameWindow';
 import MyGameSetupCard from './MyGameSetupCard';
 
 import { GameState, INITIAL_GAME_STATE, SpinRecord, SymbolId } from './types';
-import { goldCubGame, NUM_PAYLINES, FREE_SPINS_AWARD, FREE_SPINS_RETRIGGER } from './myGameConfig';
+import { goldCubGame, NUM_PAYLINES, FREE_SPINS_AWARD, FREE_SPINS_RETRIGGER, myGame } from './myGameConfig';
 import { resolveReelsFromSeed, getVisibleSymbols } from './engine/ReelEngine';
 import { evaluateWins } from './engine/WinEvaluator';
 
-interface MyGameComponentProps {
-  game: Game;
-}
-
 // Inner component owns useSearchParams — must be inside a Suspense boundary
-const MyGameInner: React.FC<MyGameComponentProps> = ({ game }) => {
+const MyGameInner = () => {
+  const game = myGame;
+
   const themeColorBackground = game.themeColorBackground;
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -369,6 +367,8 @@ const MyGameInner: React.FC<MyGameComponentProps> = ({ game }) => {
 
       {/* lg:min-h locks the row so view changes in SetupCard cannot reflow the GameWindow height */}
       <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-8 lg:gap-10 lg:min-h-[600px]">
+        <div className="w-full min-h-[400px] lg:min-h-0 lg:basis-2/3 lg:relative self-stretch">
+        <div className="lg:absolute lg:inset-0">
         <GameWindow
           game={game}
           currentGameId={currentGameId}
@@ -396,7 +396,10 @@ const MyGameInner: React.FC<MyGameComponentProps> = ({ game }) => {
             betPerLine={betPerLine}
           />
         </GameWindow>
+        </div>
+        </div>
 
+        <div className="w-full min-h-[400px] lg:min-h-0 lg:basis-1/3 flex flex-col self-stretch">
         <MyGameSetupCard
           game={game}
           onPlay={async () => await playGame()}
@@ -425,6 +428,7 @@ const MyGameInner: React.FC<MyGameComponentProps> = ({ game }) => {
           freeSpinsRemaining={gameState.freeSpinsRemaining}
           phase={gameState.phase}
         />
+        </div>
       </div>
     </div>
   );

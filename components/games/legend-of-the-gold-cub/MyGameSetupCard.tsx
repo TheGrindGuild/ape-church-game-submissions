@@ -157,7 +157,7 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
     <>
       {showPaytable && <Paytable onClose={() => setShowPaytable(false)} />}
 
-      <Card className="lg:basis-1/3 p-6 flex flex-col lg:h-full">
+      <Card className="w-full h-full min-h-[400px] lg:min-h-0 p-6 flex flex-col">
         {currentView === 0 && (
           <>
             <CardContent className="font-roboto">

@@ -290,7 +290,10 @@ export default function ReelStrip({
           position: 'absolute',
           inset: 0,
           background: 'linear-gradient(110deg, transparent 25%, rgba(255,255,255,0.07) 50%, transparent 75%)',
-          animation: `reelShimmer ${7 + (highlightRows.length ? 0 : 3)}s ease-in-out infinite`,
+          animationName: 'reelShimmer',
+          animationDuration: `${7 + (highlightRows.length ? 0 : 3)}s`,
+          animationTimingFunction: 'ease-in-out',
+          animationIterationCount: 'infinite',
           animationDelay: shimmerDelay,
         }} />
       </div>
