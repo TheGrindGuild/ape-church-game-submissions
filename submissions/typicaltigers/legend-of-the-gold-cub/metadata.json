@@ -1,0 +1,31 @@
+{
+  "team": "typicaltigers",
+  "gameName": "legend-of-the-gold-cub",
+  "displayTitle": "Legend of the Gold Cub",
+  "description": "The search for the mythical Golden Tiger Cub takes you through the world and IP of Typical Tigers. Spin 5 reels across 20 paylines, collect Purple Cub wilds, and trigger free spins when 3 or more Golden Cubs scatter across the reels.",
+  "authors": [
+    {
+      "name": "Serge Conein",
+      "telegram": "DonDiablo777NFT"
+    }
+  ],
+  "revenueShare": [
+    {
+      "name": "Serge Conein",
+      "telegram": "DonDiablo777NFT",
+      "address": "0x2C11022c9023C234033117d2f4D7C9A0bb5de58e",
+      "share": 100
+    }
+  ],
+  "status": "pending",
+  "category": "arcade",
+  "tags": ["slots", "tigers", "free-spins", "wilds", "typical-tigers"],
+  "thumbnail": "/legend-of-the-gold-cub/card.png",
+  "banner": "/legend-of-the-gold-cub/banner.png",
+  "mainComponent": "MyGame.tsx",
+  "windowComponent": "MyGameWindow.tsx",
+  "setupComponent": "MyGameSetupCard.tsx",
+  "configFile": "myGameConfig.ts",
+  "version": "1.0.0",
+  "submittedAt": "2026-05-29"
+}
