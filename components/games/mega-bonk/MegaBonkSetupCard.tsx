@@ -155,9 +155,9 @@ const MegaBonkSetupCard: React.FC<MegaBonkSetupCardProps> = ({
   };
 
   return (
-    <aside className="flex min-w-0 w-full flex-col lg:basis-1/3">
+    <aside className="flex h-full min-w-0 w-full flex-col">
       <section
-        className="flex min-w-0 w-full flex-col overflow-hidden rounded-[8px] border"
+        className="flex h-full min-w-0 w-full flex-col overflow-hidden rounded-[8px] border"
         style={{
           background: BRAND_SURFACE,
           borderColor: BRAND_BORDER,
@@ -206,8 +206,19 @@ const MegaBonkSetupCard: React.FC<MegaBonkSetupCardProps> = ({
         </header>
 
         {currentView === 0 ? (
-          <>
-            <div className="flex flex-col gap-3 px-5 pb-4 pt-5">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="shrink-0 px-5 pb-3 pt-4 lg:hidden">
+              <Button
+                onClick={onPlay}
+                disabled={isLoading || betAmount <= 0 || betAmount > maxPlayableBet}
+                className="h-12 w-full rounded-[6px] border-0 bg-[#7FFFD4] text-base font-black uppercase tracking-[0.1em] text-[#042D28] shadow-[0_0_24px_rgba(127,255,212,0.35)] transition hover:bg-[#6EE8C4] disabled:opacity-40"
+              >
+                <Zap className="h-4 w-4" />
+                {isLoading ? "Placing Bet..." : "Bonk"}
+              </Button>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-4 pt-5 lg:pt-5">
               <div className="flex items-center justify-between gap-3 rounded-[6px] border border-[#7FFFD422] bg-[#07131B]/60 px-3 py-2">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em]">
                   <span
@@ -327,181 +338,224 @@ const MegaBonkSetupCard: React.FC<MegaBonkSetupCardProps> = ({
                   </button>
                 ))}
               </div>
-            </div>
 
-            <div className="h-px bg-[#7FFFD422]" />
+              <div className="h-px bg-[#7FFFD422]" />
 
-            <div className="flex flex-col gap-3 px-5 py-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <Target className="h-3.5 w-3.5 text-[#8AD9E8]" />
-                  <span className="text-sm font-semibold text-[#ECFFFB]">Set Target</span>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Target className="h-3.5 w-3.5 text-[#8AD9E8]" />
+                    <span className="text-sm font-semibold text-[#ECFFFB]">Set Target</span>
+                  </div>
+                  <span className="max-w-[130px] truncate text-xs font-medium text-[#8AD9E8]">
+                    {getDifficultyLine(difficulty)}
+                  </span>
                 </div>
-                <span className="max-w-[130px] truncate text-xs font-medium text-[#8AD9E8]">
-                  {getDifficultyLine(difficulty)}
-                </span>
-              </div>
 
-              <input
-                type="range"
-                min={DIFFICULTY_MIN}
-                max={DIFFICULTY_MAX}
-                step={1}
-                value={difficulty}
-                disabled={isLoading}
-                onChange={(event) => setDifficulty(Number(event.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full"
-                style={{
-                  background: `linear-gradient(to right, ${BRAND_PRIMARY} ${((difficulty - DIFFICULTY_MIN) / (DIFFICULTY_MAX - DIFFICULTY_MIN)) * 100}%, #24404A ${((difficulty - DIFFICULTY_MIN) / (DIFFICULTY_MAX - DIFFICULTY_MIN)) * 100}%)`,
-                }}
-              />
+                <input
+                  type="range"
+                  min={DIFFICULTY_MIN}
+                  max={DIFFICULTY_MAX}
+                  step={1}
+                  value={difficulty}
+                  disabled={isLoading}
+                  onChange={(event) => setDifficulty(Number(event.target.value))}
+                  className="h-1.5 w-full cursor-pointer appearance-none rounded-full"
+                  style={{
+                    background: `linear-gradient(to right, ${BRAND_PRIMARY} ${((difficulty - DIFFICULTY_MIN) / (DIFFICULTY_MAX - DIFFICULTY_MIN)) * 100}%, #24404A ${((difficulty - DIFFICULTY_MIN) / (DIFFICULTY_MAX - DIFFICULTY_MIN)) * 100}%)`,
+                  }}
+                />
 
-              <div className="grid grid-cols-5 gap-1.5">
-                {DIFFICULTY_PRESETS.map((preset) => (
-                  <button
-                    type="button"
-                    key={preset}
-                    onClick={() => setDifficulty(preset)}
-                    disabled={isLoading}
-                    className={`rounded-[6px] border py-1.5 text-xs font-semibold transition-colors ${
-                      difficulty === preset
-                        ? "border-[#7FFFD4] bg-[#7FFFD4] text-[#042D28]"
-                        : "border-[#7FFFD433] bg-[#0D1D29]/85 text-[#98C9D3] hover:border-[#7FFFD466] hover:text-[#C9FFF3]"
-                    }`}
-                  >
-                    {preset}
-                  </button>
-                ))}
+                <div className="grid grid-cols-5 gap-1.5">
+                  {DIFFICULTY_PRESETS.map((preset) => (
+                    <button
+                      type="button"
+                      key={preset}
+                      onClick={() => setDifficulty(preset)}
+                      disabled={isLoading}
+                      className={`rounded-[6px] border py-1.5 text-xs font-semibold transition-colors ${
+                        difficulty === preset
+                          ? "border-[#7FFFD4] bg-[#7FFFD4] text-[#042D28]"
+                          : "border-[#7FFFD433] bg-[#0D1D29]/85 text-[#98C9D3] hover:border-[#7FFFD466] hover:text-[#C9FFF3]"
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="h-px bg-[#7FFFD422]" />
+            <div className="mt-auto shrink-0 border-t border-[#7FFFD422]">
+              <div className="flex flex-col gap-2 px-5 py-4">
+                <StatRow label="Target" value={`> ${difficulty}`} icon={<Target />} />
+                <StatRow label="Win Chance" value={`${winChance}%`} icon={<Gauge />} />
+                <StatRow label="Bet Amount" value={formatAmount(betAmount)} />
+                <StatRow
+                  label="Payout"
+                  value={potentialPayout > 0 ? formatAmount(potentialPayout) : formatAmount(0)}
+                  highlight={potentialPayout > 0}
+                />
+                <div className="my-1 h-px bg-[#7FFFD422]" />
+                <StatRow
+                  label="Max Profit Per Game"
+                  value={`${maxProfit.toLocaleString()} ${tokenLabel}`}
+                  muted
+                />
+                <StatRow
+                  label="Max Bet Per Game"
+                  value={`${MAX_BET.toLocaleString()} ${tokenLabel}`}
+                  muted
+                />
+              </div>
 
-            <div className="flex flex-col gap-2 px-5 py-4">
-              <StatRow label="Target" value={`> ${difficulty}`} icon={<Target />} />
-              <StatRow label="Win Chance" value={`${winChance}%`} icon={<Gauge />} />
-              <StatRow label="Bet Amount" value={formatAmount(betAmount)} />
-              <StatRow
-                label="Payout"
-                value={potentialPayout > 0 ? formatAmount(potentialPayout) : formatAmount(0)}
-                highlight={potentialPayout > 0}
-              />
-              <div className="my-1 h-px bg-[#7FFFD422]" />
-              <StatRow
-                label="Max Profit Per Game"
-                value={`${maxProfit.toLocaleString()} ${tokenLabel}`}
-                muted
-              />
-              <StatRow
-                label="Max Bet Per Game"
-                value={`${MAX_BET.toLocaleString()} ${tokenLabel}`}
-                muted
-              />
+              <div className="hidden px-5 pb-5 lg:block">
+                <Button
+                  onClick={onPlay}
+                  disabled={isLoading || betAmount <= 0 || betAmount > maxPlayableBet}
+                  className="h-12 w-full rounded-[6px] border-0 bg-[#7FFFD4] text-base font-black uppercase tracking-[0.1em] text-[#042D28] shadow-[0_0_24px_rgba(127,255,212,0.35)] transition hover:bg-[#6EE8C4] disabled:opacity-40"
+                >
+                  <Zap className="h-4 w-4" />
+                  {isLoading ? "Placing Bet..." : "Bonk"}
+                </Button>
+              </div>
             </div>
-
-            <div className="px-5 pb-5">
-              <Button
-                onClick={onPlay}
-                disabled={isLoading || betAmount <= 0 || betAmount > maxPlayableBet}
-                className="h-12 w-full rounded-[6px] border-0 bg-[#7FFFD4] text-base font-black uppercase tracking-[0.1em] text-[#042D28] shadow-[0_0_24px_rgba(127,255,212,0.35)] transition hover:bg-[#6EE8C4] disabled:opacity-40"
-              >
-                <Zap className="h-4 w-4" />
-                {isLoading ? "Placing Bet..." : "Bonk"}
-              </Button>
-            </div>
-          </>
+          </div>
         ) : null}
 
         {currentView === 1 ? (
-          <div className="flex flex-col gap-5 px-5 py-6">
-            <div className="flex flex-col items-center gap-3 py-5">
-              <div className="flex gap-1">
-                {[0, 1, 2].map((index) => (
-                  <div
-                    key={index}
-                    className="h-2 w-2 rounded-full bg-[#7FFFD4]"
-                    style={{
-                      animation: `bounce 0.8s ease-in-out ${index * 0.15}s infinite`,
-                    }}
-                  />
-                ))}
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 flex-1 items-center justify-center px-5 py-6">
+              <div className="flex flex-col items-center gap-3">
+                <div className="flex gap-1">
+                  {[0, 1, 2].map((index) => (
+                    <div
+                      key={index}
+                      className="h-2 w-2 rounded-full bg-[#7FFFD4]"
+                      style={{
+                        animation: `bounce 0.8s ease-in-out ${index * 0.15}s infinite`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#8AD9E8]">
+                  Reading the meter
+                </p>
               </div>
-              <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#8AD9E8]">
-                Reading the meter
-              </p>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-[6px] border border-[#7FFFD422] bg-[#07131B]/70 p-4">
-              <StatRow label="Target to Beat" value={`> ${difficulty}`} icon={<Target />} />
-              <StatRow label="Bet Amount" value={formatAmount(betAmount)} />
-              <StatRow label="Win Chance" value={`${winChance}%`} icon={<Gauge />} />
+            <div className="mt-auto shrink-0 border-t border-[#7FFFD422] px-5 py-4">
+              <div className="flex flex-col gap-2 rounded-[6px] border border-[#7FFFD422] bg-[#07131B]/70 p-4">
+                <StatRow label="Target to Beat" value={`> ${difficulty}`} icon={<Target />} />
+                <StatRow label="Bet Amount" value={formatAmount(betAmount)} />
+                <StatRow label="Win Chance" value={`${winChance}%`} icon={<Gauge />} />
+              </div>
             </div>
           </div>
         ) : null}
 
         {currentView === 2 && score !== null ? (
-          <div className="flex flex-col gap-4 px-5 py-5">
-            <div
-              className={`flex flex-col items-center gap-1 rounded-[6px] border py-4 ${
-                won
-                  ? "border-[#7FFFD433] bg-[#7FFFD4]/10"
-                  : "border-red-400/25 bg-red-500/10"
-              }`}
-            >
-              <span
-                className={`text-3xl font-black uppercase tracking-[0.08em] ${
-                  won ? "text-[#7FFFD4]" : "text-red-400"
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="shrink-0 px-5 pb-3 pt-4 lg:hidden">
+              <div className="flex flex-col gap-2">
+                {!inReplayMode ? (
+                  <Button
+                    onClick={onPlayAgain}
+                    disabled={isLoading}
+                    className="h-12 w-full rounded-[6px] border-0 bg-[#7FFFD4] text-base font-black uppercase tracking-[0.1em] text-[#042D28] shadow-[0_0_24px_rgba(127,255,212,0.3)] transition hover:bg-[#6EE8C4]"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Play Again
+                  </Button>
+                ) : null}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={onRewatch}
+                    variant="ghost"
+                    className="h-10 rounded-[6px] border border-[#7FFFD433] bg-[#0D1D29]/85 text-sm text-[#C9FFF3] hover:bg-[#103346] hover:text-white"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Rewatch
+                  </Button>
+                  <Button
+                    onClick={onReset}
+                    variant="ghost"
+                    className="h-10 rounded-[6px] border border-[#7FFFD433] bg-[#0D1D29]/85 text-sm text-[#C9FFF3] hover:bg-[#103346] hover:text-white"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Change Bet
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex min-h-0 flex-1 items-center justify-center px-5 py-4">
+              <div
+                className={`flex w-full flex-col items-center gap-1 rounded-[6px] border py-4 ${
+                  won
+                    ? "border-[#7FFFD433] bg-[#7FFFD4]/10"
+                    : "border-red-400/25 bg-red-500/10"
                 }`}
               >
-                {won ? "Target Cleared" : "Target Missed"}
-              </span>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-5xl font-black text-white">{score}</span>
-                <span className="text-sm text-[#98C9D3]">/ 100</span>
+                <span
+                  className={`text-3xl font-black uppercase tracking-[0.08em] ${
+                    won ? "text-[#7FFFD4]" : "text-red-400"
+                  }`}
+                >
+                  {won ? "Target Cleared" : "Target Missed"}
+                </span>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="text-5xl font-black text-white">{score}</span>
+                  <span className="text-sm text-[#98C9D3]">/ 100</span>
+                </div>
+                <p className="mt-1 text-xs text-[#98C9D3]">
+                  {won ? `Beat the target of ${difficulty}` : `Needed more than ${difficulty}`}
+                </p>
               </div>
-              <p className="mt-1 text-xs text-[#98C9D3]">
-                {won ? `Beat the target of ${difficulty}` : `Needed more than ${difficulty}`}
-              </p>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-[6px] border border-[#7FFFD422] bg-[#07131B]/70 p-4">
-              <StatRow label="Bet" value={formatAmount(betAmount)} />
-              <StatRow
-                label={won ? "Payout" : "Lost"}
-                value={won ? formatAmount(potentialPayout) : formatAmount(betAmount)}
-                highlight={won === true}
-                loss={won === false}
-              />
-            </div>
+            <div className="mt-auto shrink-0 border-t border-[#7FFFD422]">
+              <div className="px-5 py-4">
+                <div className="flex flex-col gap-2 rounded-[6px] border border-[#7FFFD422] bg-[#07131B]/70 p-4">
+                  <StatRow label="Bet" value={formatAmount(betAmount)} />
+                  <StatRow
+                    label={won ? "Payout" : "Lost"}
+                    value={won ? formatAmount(potentialPayout) : formatAmount(betAmount)}
+                    highlight={won === true}
+                    loss={won === false}
+                  />
+                </div>
+              </div>
 
-            <div className="flex flex-col gap-2">
-              {!inReplayMode ? (
-                <Button
-                  onClick={onPlayAgain}
-                  disabled={isLoading}
-                  className="h-12 w-full rounded-[6px] border-0 bg-[#7FFFD4] text-base font-black uppercase tracking-[0.1em] text-[#042D28] shadow-[0_0_24px_rgba(127,255,212,0.3)] transition hover:bg-[#6EE8C4]"
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  Play Again
-                </Button>
-              ) : null}
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={onRewatch}
-                  variant="ghost"
-                  className="h-10 rounded-[6px] border border-[#7FFFD433] bg-[#0D1D29]/85 text-sm text-[#C9FFF3] hover:bg-[#103346] hover:text-white"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Rewatch
-                </Button>
-                <Button
-                  onClick={onReset}
-                  variant="ghost"
-                  className="h-10 rounded-[6px] border border-[#7FFFD433] bg-[#0D1D29]/85 text-sm text-[#C9FFF3] hover:bg-[#103346] hover:text-white"
-                >
-                  <SlidersHorizontal className="h-3.5 w-3.5" />
-                  Change Bet
-                </Button>
+              <div className="hidden flex-col gap-2 px-5 pb-5 lg:flex">
+                {!inReplayMode ? (
+                  <Button
+                    onClick={onPlayAgain}
+                    disabled={isLoading}
+                    className="h-12 w-full rounded-[6px] border-0 bg-[#7FFFD4] text-base font-black uppercase tracking-[0.1em] text-[#042D28] shadow-[0_0_24px_rgba(127,255,212,0.3)] transition hover:bg-[#6EE8C4]"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Play Again
+                  </Button>
+                ) : null}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    onClick={onRewatch}
+                    variant="ghost"
+                    className="h-10 rounded-[6px] border border-[#7FFFD433] bg-[#0D1D29]/85 text-sm text-[#C9FFF3] hover:bg-[#103346] hover:text-white"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Rewatch
+                  </Button>
+                  <Button
+                    onClick={onReset}
+                    variant="ghost"
+                    className="h-10 rounded-[6px] border border-[#7FFFD433] bg-[#0D1D29]/85 text-sm text-[#C9FFF3] hover:bg-[#103346] hover:text-white"
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    Change Bet
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

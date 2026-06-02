@@ -30,11 +30,9 @@ import { Game } from "@/lib/games";
 
 type PlayCurrency = "ape" | "gp";
 
-interface MegaBonkComponentProps {
-  game: Game;
-}
-
-const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
+const MegaBonkComponent = () => {
+  const game = megaBonk;
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const replayIdString = searchParams.get("id");
@@ -387,8 +385,8 @@ const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
   return (
     <div className="relative">
       <MegaBonkRulesModal isOpen={rulesOpen} onClose={() => setRulesOpen(false)} />
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 lg:gap-10">
-        <div className="relative min-w-0 w-full lg:basis-2/3">
+      <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-8 lg:gap-10">
+        <div className="min-w-0 w-full lg:basis-2/3 lg:self-stretch">
           <GameWindow
             game={game}
             currentGameId={currentGameId}
@@ -421,6 +419,7 @@ const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
           </GameWindow>
         </div>
 
+        <div className="flex min-w-0 w-full flex-col lg:basis-1/3 lg:min-h-0 lg:self-stretch">
         <MegaBonkSetupCard
           game={game}
           currentView={currentView}
@@ -446,6 +445,7 @@ const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
           onRewatch={handleRewatch}
           onOpenRules={() => setRulesOpen(true)}
         />
+        </div>
       </div>
     </div>
   );
