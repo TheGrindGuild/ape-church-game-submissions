@@ -436,9 +436,9 @@ const MyGameInner = () => {
 
 // Exported component wraps in Suspense so app/page.tsx doesn't need changing.
 // Next.js requires useSearchParams to be inside a Suspense boundary for static builds.
-const MyGameComponent: React.FC<MyGameComponentProps> = (props) => (
+const MyGameComponent: React.FC = () => (
   <Suspense fallback={<div />}>
-    <MyGameInner {...props} />
+    <MyGameInner />
   </Suspense>
 );
 
