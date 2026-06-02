@@ -1,0 +1,31 @@
+{
+  "team": "asen-vox",
+  "gameName": "multi-card-keno",
+  "displayTitle": "Multi-Card Keno",
+  "description": "Pick 1–10 numbers across 4 or 20 cards, then watch one shared 20-number draw resolve every card. Overlapping picks glow, hits flash, and payouts follow the Ape Church Keno paytable.",
+  "authors": [
+    {
+      "name": "Asen Vox",
+      "telegram": "Man3Faces"
+    }
+  ],
+  "revenueShare": [
+    {
+      "name": "Asen Vox",
+      "telegram": "Man3Faces",
+      "address": "0x354845eBf9731Aa1448a6D87d8b0fAF302AD3F77",
+      "share": 100
+    }
+  ],
+  "status": "pending",
+  "category": "other",
+  "tags": ["keno", "casino", "multi-card"],
+  "thumbnail": "/multi-card-keno/card.jpg",
+  "banner": "/multi-card-keno/banner.png",
+  "mainComponent": "MyGame.tsx",
+  "windowComponent": "MyGameWindow.tsx",
+  "setupComponent": "MyGameSetupCard.tsx",
+  "configFile": "myGameConfig.ts",
+  "version": "1.0.0",
+  "submittedAt": "2026-06-02"
+}
