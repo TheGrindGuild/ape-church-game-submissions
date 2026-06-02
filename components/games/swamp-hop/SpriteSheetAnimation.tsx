@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     FROGLING_SPRITE_SHEETS,
+    FROG_DISPLAY_SCALE,
+    FROG_REFERENCE_FRAME_HEIGHT,
+    FROG_TARGET_HEIGHT,
     FroglingAnimationName,
-    getFrogDisplayScale,
+    getSpriteDisplayCellWidth,
 } from "./swampHopSprites";
 
 interface SpriteSheetAnimationProps {
@@ -25,15 +28,13 @@ const SpriteSheetAnimation: React.FC<SpriteSheetAnimationProps> = ({
     const sheet = FROGLING_SPRITE_SHEETS[animation];
     const [frameIndex, setFrameIndex] = useState(0);
 
-    const displayScale = useMemo(
-        () => getFrogDisplayScale(sheet.frameHeight),
-        [sheet.frameHeight]
-    );
-
     useEffect(() => {
         if (!play || sheet.frameCount <= 1) {
             return undefined;
         }
+
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- restart sprite on hop
+        setFrameIndex(0);
 
         const intervalMs = Math.max(
             16,
@@ -53,25 +54,32 @@ const SpriteSheetAnimation: React.FC<SpriteSheetAnimationProps> = ({
         return () => window.clearInterval(intervalId);
     }, [play, sheet.frameCount, sheet.fps, sheet.loop, animation, restartKey]);
 
-    const offsetX = frameIndex * sheet.frameWidth * displayScale;
-    const offsetY = sheet.rowY * displayScale;
-    const displayWidth = sheet.frameWidth * displayScale;
-    const displayHeight = sheet.frameHeight * displayScale;
+    const cellWidth = getSpriteDisplayCellWidth(sheet.frameWidth);
+    const cellHeight = FROG_TARGET_HEIGHT;
+    const offsetX = frameIndex * sheet.frameWidth * FROG_DISPLAY_SCALE;
+    const cropTopY = Math.max(
+        sheet.rowY,
+        sheet.rowY + sheet.frameHeight - FROG_REFERENCE_FRAME_HEIGHT
+    );
+    const offsetY = cropTopY * FROG_DISPLAY_SCALE;
 
     return (
         <div
-            className={className}
+            className="swamp-hop-sprite-box"
             role="img"
             aria-label={alt}
-            style={{
-                width: displayWidth,
-                height: displayHeight,
-                backgroundImage: `url(${sheet.src})`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: `-${offsetX}px -${offsetY}px`,
-                backgroundSize: `${sheet.sheetWidth * displayScale}px ${sheet.sheetHeight * displayScale}px`,
-            }}
-        />
+            style={{ width: cellWidth, height: cellHeight }}
+        >
+            <div
+                className={`swamp-hop-sprite-cell ${className ?? ""}`}
+                style={{
+                    backgroundImage: `url(${sheet.src})`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: `-${offsetX}px -${offsetY}px`,
+                    backgroundSize: `${sheet.sheetWidth * FROG_DISPLAY_SCALE}px ${sheet.sheetHeight * FROG_DISPLAY_SCALE}px`,
+                }}
+            />
+        </div>
     );
 };
 

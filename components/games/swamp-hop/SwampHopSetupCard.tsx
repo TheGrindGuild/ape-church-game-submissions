@@ -222,13 +222,15 @@ const SwampHopSetupCard: React.FC<SwampHopSetupCardProps> = ({
                         <>
                             <div className="w-full flex justify-between items-center gap-2">
                                 <p>Current Bank</p>
-                                <p className="text-right text-[#3d8b37]">
+                                <p className="text-right text-[#3d8b37] tabular-nums">
                                     {getBankText()}
                                 </p>
                             </div>
                             <div className="w-full flex justify-between items-center gap-2">
                                 <p>Multiplier</p>
-                                <p className="text-right">{getMultiplierText()}</p>
+                                <p className="text-right tabular-nums">
+                                    {getMultiplierText()}
+                                </p>
                             </div>
                         </>
                     )}
@@ -450,16 +452,18 @@ const SwampHopSetupCard: React.FC<SwampHopSetupCardProps> = ({
                             >
                                 Cash Out
                             </Button>
-                            {getCashOutHelperText() != null && (
-                                <p className="text-xs text-[#91989C] text-center">
-                                    {getCashOutHelperText()}
-                                </p>
-                            )}
+                            <div className="min-h-[2.5rem] flex items-center justify-center w-full">
+                                {getCashOutHelperText() != null && (
+                                    <p className="text-xs text-[#91989C] text-center">
+                                        {getCashOutHelperText()}
+                                    </p>
+                                )}
+                            </div>
 
                             <div className="w-full mt-2 pt-3 border-t border-white/10 text-xs text-[#91989C] space-y-1">
                                 <div className="flex justify-between">
                                     <span>Croc chance (next hop)</span>
-                                    <span className="text-white/90">
+                                    <span className="text-white/90 tabular-nums">
                                         {getCrocChancePercent(currentHopIndex).toFixed(
                                             1
                                         )}

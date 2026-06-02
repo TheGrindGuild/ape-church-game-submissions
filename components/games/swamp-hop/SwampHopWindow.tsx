@@ -1,18 +1,22 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useSound from "use-sound";
 import { Game } from "@/lib/games";
 import { FROG_ANCHOR_SLOT, VISIBLE_PAD_COUNT } from "./swampHopConfig";
-import { HopResult, PAD_LABELS } from "./swampHopLogic";
+import { HopResult, PAD_LABELS, PadType } from "./swampHopLogic";
 import SpriteSheetAnimation from "./SpriteSheetAnimation";
+import SwampHopRunStats from "./SwampHopRunStats";
 import {
     FroglingAnimationName,
     PAD_IMAGE_SHORE,
     PAD_IMAGE_UNKNOWN,
     PAD_IMAGES,
 } from "./swampHopSprites";
+
+/** Matches SwampHop hop timeout and motion duration. */
+export const HOP_MOTION_DURATION_S = 0.7;
 
 interface SwampHopWindowProps {
     game: Game;
@@ -25,6 +29,7 @@ interface SwampHopWindowProps {
     betAmount: number;
     payoutAmount: number;
     currentBank: number;
+    currentMultiplier: number;
     cashedOut: boolean;
 }
 
@@ -45,6 +50,23 @@ function getPadImageSrc(
     return PAD_IMAGE_UNKNOWN;
 }
 
+function getPadLabel(
+    globalIndex: number,
+    padType: number | null,
+    isFuture: boolean
+): string {
+    if (isFuture) {
+        return "Ahead";
+    }
+    if (padType != null) {
+        return PAD_LABELS[padType as PadType];
+    }
+    if (globalIndex === 0) {
+        return "Shore";
+    }
+    return "Pad";
+}
+
 const SwampHopWindow: React.FC<SwampHopWindowProps> = ({
     isHopping,
     currentHopIndex,
@@ -55,6 +77,7 @@ const SwampHopWindow: React.FC<SwampHopWindowProps> = ({
     betAmount,
     payoutAmount,
     currentBank,
+    currentMultiplier,
     cashedOut,
 }) => {
     const muteSfx = false;
@@ -80,20 +103,54 @@ const SwampHopWindow: React.FC<SwampHopWindowProps> = ({
     const [frogAnimation, setFrogAnimation] =
         useState<FroglingAnimationName>("idle");
 
+    /** Shore + one slot per hop (e.g. 1 hop → shore + landing pad). */
+    const padCount = maxHops + 1;
+
     const frogGlobalIndex = isHopping
-        ? Math.min(currentHopIndex + 1, maxHops - 1)
-        : Math.min(currentHopIndex, maxHops - 1);
+        ? Math.min(currentHopIndex + 1, maxHops)
+        : Math.min(currentHopIndex, maxHops);
 
-    const visibleStart = Math.max(0, frogGlobalIndex - FROG_ANCHOR_SLOT);
-    const frogVisibleIndex = frogGlobalIndex - visibleStart;
+    /** Pad the frog stands on; during a hop he launches from the pad he is leaving. */
+    const frogPadIndex = isHopping
+        ? Math.min(currentHopIndex, maxHops)
+        : frogGlobalIndex;
 
-    const visiblePads = useMemo(() => {
-        return Array.from({ length: VISIBLE_PAD_COUNT }, (_, i) => {
-            const globalIndex = visibleStart + i;
+    const frogColumn = Math.min(frogGlobalIndex, FROG_ANCHOR_SLOT);
+
+    const padWorldScrollRef = useRef<HTMLDivElement>(null);
+    const [padStepPx, setPadStepPx] = useState(0);
+
+    useLayoutEffect(() => {
+        const root = padWorldScrollRef.current;
+        if (!root) {
+            return undefined;
+        }
+
+        const measure = () => {
+            const unit = root.querySelector(".swamp-hop-pad-unit");
+            setPadStepPx(
+                unit ? unit.getBoundingClientRect().width : 0
+            );
+        };
+
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(root);
+        return () => observer.disconnect();
+    }, [padCount]);
+
+    /** Align pad under frog: shift world so pad[frogGlobalIndex] sits at frogColumn. */
+    const worldTranslatePercent =
+        padCount > 0
+            ? -((frogGlobalIndex - frogColumn) / padCount) * 100
+            : 0;
+
+    const allPads = useMemo(() => {
+        return Array.from({ length: padCount }, (_, globalIndex) => {
             const historyHop = hopHistory[globalIndex] ?? null;
             const isCurrent = globalIndex === frogGlobalIndex;
             const isPast = globalIndex < currentHopIndex;
-            const isFuture = globalIndex >= maxHops;
+            const isFuture = globalIndex > frogGlobalIndex;
 
             return {
                 globalIndex,
@@ -103,7 +160,7 @@ const SwampHopWindow: React.FC<SwampHopWindowProps> = ({
                 isFuture,
             };
         });
-    }, [visibleStart, frogGlobalIndex, currentHopIndex, hopHistory, maxHops]);
+    }, [padCount, frogGlobalIndex, currentHopIndex, hopHistory]);
 
     useEffect(() => {
         if (!isHopping) {
@@ -163,117 +220,154 @@ const SwampHopWindow: React.FC<SwampHopWindowProps> = ({
         return () => window.clearTimeout(timer);
     }, [frogAnimation, isHopping]);
 
+    const hopTransition = {
+        duration: isHopping ? HOP_MOTION_DURATION_S : 0.45,
+        ease: [0.25, 0.1, 0.25, 1] as const,
+    };
+
+    const hopTravelPx =
+        padStepPx > 0
+            ? padStepPx * Math.max(1, frogGlobalIndex - currentHopIndex)
+            : 0;
+
+    const frogMotionAnimate = isHopping
+        ? {
+              x: [0, hopTravelPx, hopTravelPx],
+              y: [0, -48, 0],
+          }
+        : frogAnimation === "fall"
+          ? { x: 0, y: [0, 20, 50], opacity: [1, 1, 0.3] }
+          : { x: 0, y: 0, opacity: 1 };
+
+    const frogMotionDuration = isHopping
+        ? HOP_MOTION_DURATION_S
+        : frogAnimation === "fall"
+          ? 0.7
+          : 0.45;
+
     return (
         <div className="swamp-hop-viewport absolute inset-0 z-10 overflow-hidden text-white pointer-events-none">
+            {!gameCompleted && (
+                <SwampHopRunStats
+                    currentBank={currentBank}
+                    currentMultiplier={currentMultiplier}
+                    currentHopIndex={currentHopIndex}
+                    maxHops={maxHops}
+                />
+            )}
+
             <div className="swamp-hop-playfield">
                 <div className="swamp-hop-path">
                     <div
-                        className="swamp-hop-pad-track"
-                        data-window-start={visibleStart}
+                        className="swamp-hop-pad-stage"
+                        style={
+                            {
+                                "--pad-count": padCount,
+                                "--visible-pads": VISIBLE_PAD_COUNT,
+                            } as React.CSSProperties
+                        }
                     >
-                        {visiblePads.map((pad, index) => {
-                            const src = getPadImageSrc(
-                                pad.globalIndex,
-                                pad.padType,
-                                pad.isFuture
-                            );
-                            const opacity = pad.isPast
-                                ? 0.55
-                                : pad.isFuture
-                                  ? 0.4
-                                  : 1;
+                        <div className="swamp-hop-pad-viewport">
+                        <div
+                            ref={padWorldScrollRef}
+                            className="swamp-hop-pad-world-scroll"
+                        >
+                        <motion.div
+                            className="swamp-hop-pad-world"
+                            initial={false}
+                            animate={{ x: `${worldTranslatePercent}%` }}
+                            transition={hopTransition}
+                        >
+                            {allPads.map((pad) => {
+                                const src = getPadImageSrc(
+                                    pad.globalIndex,
+                                    pad.padType,
+                                    pad.isFuture
+                                );
+                                const opacity = pad.isPast
+                                    ? 0.55
+                                    : pad.isFuture
+                                      ? 0.4
+                                      : 1;
 
-                            const isFrogPad = index === frogVisibleIndex;
-
-                            return (
-                                <div
-                                    key={`${pad.globalIndex}-${index}`}
-                                    className="swamp-hop-pad"
-                                    style={{ opacity }}
-                                >
-                                    {isFrogPad && (
-                                        <motion.div
-                                            className="swamp-hop-frog-on-pad"
-                                            initial={false}
-                                            animate={{
-                                                x:
-                                                    isHopping &&
-                                                    frogVisibleIndex > 0 &&
-                                                    frogGlobalIndex <=
-                                                        FROG_ANCHOR_SLOT
-                                                        ? ["-18%", "0%"]
-                                                        : "0%",
-                                            }}
-                                            transition={{
-                                                duration: isHopping ? 0.65 : 0.45,
-                                                ease: [0.34, 1.08, 0.64, 1],
-                                            }}
-                                        >
+                                return (
+                                    <div
+                                        key={pad.globalIndex}
+                                        className="swamp-hop-pad-unit"
+                                        style={{ opacity }}
+                                    >
+                                        <div className="swamp-hop-pad-surface">
                                             <motion.div
                                                 animate={
-                                                    isHopping
-                                                        ? { y: [0, -28, 0] }
-                                                        : frogAnimation === "fall"
-                                                          ? {
-                                                                y: [0, 20, 50],
-                                                                opacity: [1, 1, 0.3],
-                                                            }
-                                                          : { y: 0, opacity: 1 }
+                                                    pad.isCurrent &&
+                                                    frogAnimation === "wobble"
+                                                        ? {
+                                                              rotate: [
+                                                                  -4, 4, -2, 0,
+                                                              ],
+                                                          }
+                                                        : { rotate: 0 }
                                                 }
-                                                transition={{
-                                                    duration: isHopping ? 0.65 : 0.7,
-                                                }}
+                                                transition={{ duration: 0.4 }}
                                             >
-                                                <SpriteSheetAnimation
-                                                    key={`${currentHopIndex}-${frogAnimation}-${isHopping}`}
-                                                    animation={frogAnimation}
-                                                    play={!gameCompleted}
-                                                    alt="Frogling"
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={src}
+                                                    alt=""
+                                                    className={`swamp-hop-pad-img ${
+                                                        pad.isCurrent
+                                                            ? "current"
+                                                            : ""
+                                                    }`}
+                                                    draggable={false}
                                                 />
                                             </motion.div>
-                                        </motion.div>
-                                    )}
-                                    <motion.div
-                                        animate={
-                                            pad.isCurrent &&
-                                            frogAnimation === "wobble"
-                                                ? { rotate: [-4, 4, -2, 0] }
-                                                : { rotate: 0 }
-                                        }
-                                        transition={{ duration: 0.4 }}
-                                    >
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src={src}
-                                            alt=""
-                                            className={`swamp-hop-pad-img ${
-                                                pad.isCurrent ? "current" : ""
-                                            }`}
-                                            draggable={false}
-                                        />
-                                    </motion.div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="swamp-hop-pad-labels">
-                        {visiblePads.map((pad, index) => (
-                            <div
-                                key={`label-${pad.globalIndex}-${index}`}
-                                className="swamp-hop-pad-label-slot"
-                            >
-                                <span className="swamp-hop-pad-label">
-                                    {pad.isFuture
-                                        ? "Ahead"
-                                        : pad.padType != null
-                                          ? PAD_LABELS[pad.padType]
-                                          : pad.globalIndex === 0
-                                            ? "Shore"
-                                            : "Pad"}
-                                </span>
-                            </div>
-                        ))}
+                                            {pad.globalIndex ===
+                                                frogPadIndex &&
+                                                !gameCompleted && (
+                                                    <div className="swamp-hop-frog-slot">
+                                                        <motion.div
+                                                            className="swamp-hop-frog-motion"
+                                                            initial={false}
+                                                            animate={
+                                                                frogMotionAnimate
+                                                            }
+                                                            transition={{
+                                                                duration:
+                                                                    frogMotionDuration,
+                                                                ease: hopTransition.ease,
+                                                            }}
+                                                            key={`frog-hop-${currentHopIndex}`}
+                                                        >
+                                                            <SpriteSheetAnimation
+                                                                animation={
+                                                                    frogAnimation
+                                                                }
+                                                                play={
+                                                                    !gameCompleted
+                                                                }
+                                                                restartKey={
+                                                                    currentHopIndex
+                                                                }
+                                                                alt="Frogling"
+                                                            />
+                                                        </motion.div>
+                                                    </div>
+                                                )}
+                                        </div>
+                                        <span className="swamp-hop-pad-label">
+                                            {getPadLabel(
+                                                pad.globalIndex,
+                                                pad.padType,
+                                                pad.isFuture
+                                            )}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </motion.div>
+                        </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -313,7 +407,7 @@ const SwampHopWindow: React.FC<SwampHopWindowProps> = ({
             </AnimatePresence>
 
             {cashedOut && (
-                <div className="swamp-hop-outcome" style={{ bottom: "18%" }}>
+                <div className="swamp-hop-outcome swamp-hop-outcome-cashout">
                     <p className="text-[#8fd98a] font-semibold text-sm">
                         Cashed out!
                     </p>

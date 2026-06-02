@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getPayout, randomBytes, Game } from "@/lib/games";
 import GameWindow from "@/components/shared/GameWindow";
-import SwampHopWindow from "./SwampHopWindow";
+import SwampHopWindow, { HOP_MOTION_DURATION_S } from "./SwampHopWindow";
 import SwampHopSetupCard from "./SwampHopSetupCard";
 import LumaShrineBonusRound from "./LumaShrineBonusRound";
 import { bytesToHex, Hex } from "viem";
@@ -22,7 +22,6 @@ import {
     precomputeHopSequence,
 } from "./swampHopLogic";
 import { getSceneForGameId } from "./swampHopSprites";
-import SwampHopRunStats from "./SwampHopRunStats";
 import { LUMA_BONUS_CONFIG, LumaChoiceId } from "./swampHopConfig";
 
 interface SwampHopComponentProps {
@@ -307,7 +306,7 @@ const SwampHopComponent: React.FC<SwampHopComponentProps> = ({ game }) => {
                 setCurrentBank(treasureBank);
                 finishGame(treasureBank, 1500);
             }
-        }, 900);
+        }, Math.round(HOP_MOTION_DURATION_S * 1000));
     };
 
     const handleLumaBonusComplete = (
@@ -464,21 +463,14 @@ const SwampHopComponent: React.FC<SwampHopComponentProps> = ({ game }) => {
 
     return (
         <div>
-            {currentView >= 1 && currentView !== 2 && (
-                <SwampHopRunStats
-                    currentBank={currentBank}
-                    currentMultiplier={currentMultiplier}
-                    currentHopIndex={currentHopIndex}
-                    maxHops={maxHops}
-                />
-            )}
-
-            <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 lg:gap-10">
+            <div className="swamp-hop-layout flex flex-col lg:flex-row gap-4 sm:gap-8 lg:gap-10">
+                <div className="swamp-hop-game-frame lg:basis-2/3 w-full">
                 <GameWindow
                     game={activeGame}
                     currentGameId={currentGameId}
                     isLoading={isLoading}
                     isGameFinished={gameOver}
+                    backgroundImageClassName="opacity-75 object-cover object-bottom"
                     onPlayAgain={handlePlayAgain}
                     playAgainText={playAgainText}
                     onRewatch={handleRewatch}
@@ -503,6 +495,7 @@ const SwampHopComponent: React.FC<SwampHopComponentProps> = ({ game }) => {
                         betAmount={getActiveBetAmount()}
                         payoutAmount={getTotalPayout()}
                         currentBank={currentBank}
+                        currentMultiplier={currentMultiplier}
                         cashedOut={cashedOut}
                     />
                     {currentView === 3 && pendingBonusHop != null && (
@@ -516,6 +509,7 @@ const SwampHopComponent: React.FC<SwampHopComponentProps> = ({ game }) => {
                         />
                     )}
                 </GameWindow>
+                </div>
 
                 <SwampHopSetupCard
                     game={game}

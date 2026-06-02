@@ -17,7 +17,7 @@ const SwampHopRunStats: React.FC<SwampHopRunStatsProps> = ({
 
     return (
         <div
-            className="swamp-hop-run-stats"
+            className="swamp-hop-hud"
             aria-live="polite"
             aria-label="Current run stats"
         >

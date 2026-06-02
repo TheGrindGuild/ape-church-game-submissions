@@ -37,7 +37,7 @@ export const FROGLING_SPRITE_SHEETS: Record<
         frameWidth: 128,
         frameHeight: 157,
         frameCount: 4,
-        rowY: 6,
+        rowY: 0,
         fps: 4,
         loop: true,
     },
@@ -100,8 +100,25 @@ export const FROGLING_SPRITE_SHEETS: Record<
 
 export const FROG_TARGET_HEIGHT = 96;
 
-export function getFrogDisplayScale(frameHeight: number): number {
-    return FROG_TARGET_HEIGHT / frameHeight;
+/** Reference cell — idle row; all animations render in this box to prevent hop zoom. */
+export const FROG_REFERENCE_FRAME_WIDTH = 128;
+export const FROG_REFERENCE_FRAME_HEIGHT = 157;
+
+/** Unified sheet scale so idle/hop/slash frames render the same size. */
+export const FROG_DISPLAY_SCALE =
+    FROG_TARGET_HEIGHT / FROG_REFERENCE_FRAME_HEIGHT;
+
+export const FROG_SPRITE_BOX_WIDTH = Math.ceil(
+    FROG_REFERENCE_FRAME_WIDTH * FROG_DISPLAY_SCALE
+);
+
+/** Clip viewport width per animation — one sheet frame, no horizontal bleed. */
+export function getSpriteDisplayCellWidth(frameWidth: number): number {
+    return Math.ceil(frameWidth * FROG_DISPLAY_SCALE);
+}
+
+export function getFrogDisplayScale(_frameHeight?: number): number {
+    return FROG_DISPLAY_SCALE;
 }
 
 /** Pad type index → lily pad image (see swampHopLogic pad types 0–5). */
