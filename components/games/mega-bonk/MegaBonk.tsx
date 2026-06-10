@@ -17,7 +17,6 @@ import {
   getWinChance,
   MAX_BET,
   METER_COUNT_DURATION_MS,
-  PUNCH_DELAY_MS,
   RESULT_ANIM_DELAY_MS,
   RESULT_SFX_DUCK_MULTIPLIER,
   RESULT_SFX_RESTORE_DELAY_MS,
@@ -282,16 +281,6 @@ const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
           // Win/lose SFX synced to the victory/defeat animation start
           scheduleResultSfx(won);
 
-          setTimeout(() => {
-            playSfx(punchSfxRef.current); // punch impact at frame 31
-            animateMeter(score, () => {
-              setTimeout(() => {
-                setCurrentView(2);
-                setGameOver(true);
-                setIsGameOngoing(false);
-              }, 600);
-            });
-          }, PUNCH_DELAY_MS);
         }, 800);
       } else {
         toast.info("Something went wrong.");
@@ -365,15 +354,18 @@ const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
     // Win/lose SFX synced to the victory/defeat animation start
     scheduleResultSfx(gameState.won === true);
 
-    setTimeout(() => {
-      playSfx(punchSfxRef.current);
-      animateMeter(gameState.score!, () => {
-        setTimeout(() => {
-          setCurrentView(2);
-          setGameOver(true);
-        }, 600);
-      });
-    }, PUNCH_DELAY_MS);
+  };
+
+  const handlePunchImpact = () => {
+    if (gameState.score === null) return;
+    playSfx(punchSfxRef.current);
+    animateMeter(gameState.score, () => {
+      setTimeout(() => {
+        setCurrentView(2);
+        setGameOver(true);
+        setIsGameOngoing(false);
+      }, 600);
+    });
   };
 
   const handleDifficultyChange = (value: number) => {
@@ -417,6 +409,7 @@ const MegaBonkComponent: React.FC<MegaBonkComponentProps> = ({ game }) => {
               won={gameState.won}
               meterValue={meterValue}
               onDifficultyChange={handleDifficultyChange}
+              onPunchImpact={handlePunchImpact}
             />
           </GameWindow>
         </div>
