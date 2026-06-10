@@ -74,6 +74,9 @@ const FRAME_MS = 1000 / TARGET_FPS;
 const FRAME_SKIP_EPSILON_MS = 1;
 const MAX_RENDER_PIXEL_RATIO = 1.5;
 const PUNCH_CROSSFADE_SECONDS = 0.12;
+const DEFEAT_TRIM_START_FRAME = 30;
+const DEFEAT_CROSSFADE_MS = 120;
+const AUTHORED_ANIMATION_FPS = 30;
 const SLIDER_HIT_ZONE_STORAGE_KEY = "mega-bonk-slider-hit-zone";
 const SHOW_SLIDER_HIT_ZONE_EDITOR = false;
 const DEFAULT_SLIDER_HIT_ZONE: SliderHitZone = {
@@ -239,6 +242,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
   const machineMixerRef = useRef<THREE.AnimationMixer | null>(null);
   const wadeActionsRef = useRef<Partial<Record<WadeAnim, THREE.AnimationAction>>>({});
   const machineActionsRef = useRef<Partial<Record<MachineAnim, THREE.AnimationAction>>>({});
+  const defeatFirstPassActionRef = useRef<THREE.AnimationAction | null>(null);
   const currentWadeActionRef = useRef<THREE.AnimationAction | null>(null);
   const currentMachineActionRef = useRef<THREE.AnimationAction | null>(null);
 
@@ -355,7 +359,12 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
   };
 
   // ── Wade animation ─────────────────────────────────────────────────────────
-  const playWade = (name: WadeAnim, loop = true, crossfadeMs = 250) => {
+  const playWade = (
+    name: WadeAnim,
+    loop = true,
+    crossfadeMs = 250,
+    warpCrossfade = true,
+  ) => {
     const next = wadeActionsRef.current[name];
     if (!next) return;
     const prev = currentWadeActionRef.current;
@@ -364,7 +373,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
     next.clampWhenFinished = !loop;
     next.enabled = true;
     if (prev && prev !== next) {
-      prev.crossFadeTo(next, crossfadeMs / 1000, true);
+      prev.crossFadeTo(next, crossfadeMs / 1000, warpCrossfade);
     }
     next.play();
     currentWadeActionRef.current = next;
@@ -762,11 +771,54 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
           const clip = THREE.AnimationClip.findByName(gltf.animations, name);
           if (clip) wadeActionsRef.current[name] = wadeMixer.clipAction(clip);
         });
+        const defeatClip = THREE.AnimationClip.findByName(gltf.animations, "Wade_Defeat");
+        if (defeatClip) {
+          const defeatFirstPassClip = THREE.AnimationUtils.subclip(
+            defeatClip,
+            "Wade_Defeat_FirstPass",
+            DEFEAT_TRIM_START_FRAME,
+            Math.ceil(defeatClip.duration * AUTHORED_ANIMATION_FPS),
+            AUTHORED_ANIMATION_FPS,
+          );
+          defeatFirstPassActionRef.current = wadeMixer.clipAction(defeatFirstPassClip);
+        }
         wadeMixer.addEventListener("finished", (e) => {
           const finished = e.action as THREE.AnimationAction;
           const punch = wadeActionsRef.current["Wade_Punch"];
           if (finished === punch && phaseRef.current === 1) {
-            playWade(wonRef.current ? "Wade_Victory" : "Wade_Defeat", true);
+            if (wonRef.current) {
+              playWade("Wade_Victory", true);
+            } else {
+              const defeatFirstPass = defeatFirstPassActionRef.current;
+              if (!defeatFirstPass) {
+                playWade("Wade_Defeat", true, DEFEAT_CROSSFADE_MS, false);
+                return;
+              }
+              const previous = currentWadeActionRef.current;
+              defeatFirstPass
+                .reset()
+                .setLoop(THREE.LoopOnce, 1);
+              defeatFirstPass.clampWhenFinished = true;
+              defeatFirstPass.enabled = true;
+              defeatFirstPass.setEffectiveWeight(1);
+              defeatFirstPass.setEffectiveTimeScale(1);
+              defeatFirstPass.play();
+              if (previous && previous !== defeatFirstPass) {
+                previous.crossFadeTo(
+                  defeatFirstPass,
+                  DEFEAT_CROSSFADE_MS / 1000,
+                  false,
+                );
+              }
+              currentWadeActionRef.current = defeatFirstPass;
+            }
+          } else if (
+            finished === defeatFirstPassActionRef.current &&
+            wonRef.current === false
+          ) {
+            finished.stop();
+            currentWadeActionRef.current = null;
+            playWade("Wade_Defeat", true, 0, false);
           }
         });
         if (phaseRef.current === 0) playWade("Wade_BoxingIdle", true);
@@ -829,6 +881,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
       renderer.domElement.removeEventListener("pointerup", onPointerUp);
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
       wadeMixerRef.current?.stopAllAction(); wadeMixerRef.current = null;
+      defeatFirstPassActionRef.current = null;
       machineMixerRef.current?.stopAllAction(); machineMixerRef.current = null;
       bloomPass.dispose();
       bokehPass.dispose();
