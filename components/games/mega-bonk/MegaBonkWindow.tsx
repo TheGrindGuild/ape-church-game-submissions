@@ -11,7 +11,12 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { BokehPass } from "three/addons/postprocessing/BokehPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Game } from "@/lib/games";
-import { DIFFICULTY_MIN, DIFFICULTY_MAX } from "./megaBonkConfig";
+import {
+  BAG_DROP_DURATION_MS,
+  DIFFICULTY_MIN,
+  DIFFICULTY_MAX,
+  PUNCH_IMPACT_OFFSET_MS,
+} from "./megaBonkConfig";
 
 interface MegaBonkWindowProps {
   game: Game;
@@ -21,6 +26,7 @@ interface MegaBonkWindowProps {
   won: boolean | null;
   meterValue: number;
   onDifficultyChange: (value: number) => void;
+  onPunchImpact: () => void;
 }
 
 type WadeAnim = "Wade_BoxingIdle" | "Wade_Punch" | "Wade_Victory" | "Wade_Defeat";
@@ -67,7 +73,10 @@ const TARGET_FPS = 60;
 const FRAME_MS = 1000 / TARGET_FPS;
 const FRAME_SKIP_EPSILON_MS = 1;
 const MAX_RENDER_PIXEL_RATIO = 1.5;
-const BAG_DROP_MS = 333;
+const PUNCH_CROSSFADE_SECONDS = 0.12;
+const DEFEAT_TRIM_START_FRAME = 30;
+const DEFEAT_CROSSFADE_MS = 120;
+const AUTHORED_ANIMATION_FPS = 30;
 const SLIDER_HIT_ZONE_STORAGE_KEY = "mega-bonk-slider-hit-zone";
 const SHOW_SLIDER_HIT_ZONE_EDITOR = false;
 const DEFAULT_SLIDER_HIT_ZONE: SliderHitZone = {
@@ -211,7 +220,7 @@ const drawCanvasDigit = (
 };
 
 const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
-  phase, difficulty, won, meterValue, onDifficultyChange,
+  phase, difficulty, won, meterValue, onDifficultyChange, onPunchImpact,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sliderHitZone, setSliderHitZone] = useState<SliderHitZone>(DEFAULT_SLIDER_HIT_ZONE);
@@ -233,6 +242,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
   const machineMixerRef = useRef<THREE.AnimationMixer | null>(null);
   const wadeActionsRef = useRef<Partial<Record<WadeAnim, THREE.AnimationAction>>>({});
   const machineActionsRef = useRef<Partial<Record<MachineAnim, THREE.AnimationAction>>>({});
+  const defeatFirstPassActionRef = useRef<THREE.AnimationAction | null>(null);
   const currentWadeActionRef = useRef<THREE.AnimationAction | null>(null);
   const currentMachineActionRef = useRef<THREE.AnimationAction | null>(null);
 
@@ -242,6 +252,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
   const difficultyRef = useRef(difficulty);
   const meterValueRef = useRef(meterValue);
   const onDifficultyChangeRef = useRef(onDifficultyChange);
+  const onPunchImpactRef = useRef(onPunchImpact);
 
   // ── Timers ─────────────────────────────────────────────────────────────────
   const punchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -265,6 +276,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
   useEffect(() => { difficultyRef.current = difficulty; }, [difficulty]);
   useEffect(() => { meterValueRef.current = meterValue; }, [meterValue]);
   useEffect(() => { onDifficultyChangeRef.current = onDifficultyChange; }, [onDifficultyChange]);
+  useEffect(() => { onPunchImpactRef.current = onPunchImpact; }, [onPunchImpact]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(SLIDER_HIT_ZONE_STORAGE_KEY);
@@ -347,7 +359,12 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
   };
 
   // ── Wade animation ─────────────────────────────────────────────────────────
-  const playWade = (name: WadeAnim, loop = true, crossfadeMs = 250) => {
+  const playWade = (
+    name: WadeAnim,
+    loop = true,
+    crossfadeMs = 250,
+    warpCrossfade = true,
+  ) => {
     const next = wadeActionsRef.current[name];
     if (!next) return;
     const prev = currentWadeActionRef.current;
@@ -356,7 +373,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
     next.clampWhenFinished = !loop;
     next.enabled = true;
     if (prev && prev !== next) {
-      prev.crossFadeTo(next, crossfadeMs / 1000, true);
+      prev.crossFadeTo(next, crossfadeMs / 1000, warpCrossfade);
     }
     next.play();
     currentWadeActionRef.current = next;
@@ -374,6 +391,45 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
     if (prev && prev !== next) prev.crossFadeTo(next, 0.15, true);
     next.play();
     currentMachineActionRef.current = next;
+  };
+
+  const playSynchronizedPunch = () => {
+    const wadePunch = wadeActionsRef.current["Wade_Punch"];
+    const machinePunch = machineActionsRef.current["Machine_Punch"];
+
+    if (!wadePunch || !machinePunch) {
+      if (wadePunch) playWade("Wade_Punch", false, 0);
+      if (machinePunch) playMachine("Machine_Punch", false);
+      return;
+    }
+
+    const synchronizedDuration = Math.max(
+      wadePunch.getClip().duration,
+      machinePunch.getClip().duration,
+    );
+
+    const previousWadeAction = currentWadeActionRef.current;
+    currentMachineActionRef.current?.stop();
+
+    [wadePunch, machinePunch].forEach((action) => {
+      action.stop();
+      action.reset();
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+      action.enabled = true;
+      action.setEffectiveWeight(1);
+      action.setEffectiveTimeScale(action.getClip().duration / synchronizedDuration);
+    });
+
+    // Both punch clocks begin together. Wade's idle pose only affects the
+    // opening blend weight, so the machine and character still finish together.
+    wadePunch.play();
+    machinePunch.play();
+    if (previousWadeAction && previousWadeAction !== wadePunch) {
+      previousWadeAction.crossFadeTo(wadePunch, PUNCH_CROSSFADE_SECONDS, false);
+    }
+    currentWadeActionRef.current = wadePunch;
+    currentMachineActionRef.current = machinePunch;
   };
 
   // ── Scene setup (once) ─────────────────────────────────────────────────────
@@ -715,11 +771,54 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
           const clip = THREE.AnimationClip.findByName(gltf.animations, name);
           if (clip) wadeActionsRef.current[name] = wadeMixer.clipAction(clip);
         });
+        const defeatClip = THREE.AnimationClip.findByName(gltf.animations, "Wade_Defeat");
+        if (defeatClip) {
+          const defeatFirstPassClip = THREE.AnimationUtils.subclip(
+            defeatClip,
+            "Wade_Defeat_FirstPass",
+            DEFEAT_TRIM_START_FRAME,
+            Math.ceil(defeatClip.duration * AUTHORED_ANIMATION_FPS),
+            AUTHORED_ANIMATION_FPS,
+          );
+          defeatFirstPassActionRef.current = wadeMixer.clipAction(defeatFirstPassClip);
+        }
         wadeMixer.addEventListener("finished", (e) => {
           const finished = e.action as THREE.AnimationAction;
           const punch = wadeActionsRef.current["Wade_Punch"];
           if (finished === punch && phaseRef.current === 1) {
-            playWade(wonRef.current ? "Wade_Victory" : "Wade_Defeat", true);
+            if (wonRef.current) {
+              playWade("Wade_Victory", true);
+            } else {
+              const defeatFirstPass = defeatFirstPassActionRef.current;
+              if (!defeatFirstPass) {
+                playWade("Wade_Defeat", true, DEFEAT_CROSSFADE_MS, false);
+                return;
+              }
+              const previous = currentWadeActionRef.current;
+              defeatFirstPass
+                .reset()
+                .setLoop(THREE.LoopOnce, 1);
+              defeatFirstPass.clampWhenFinished = true;
+              defeatFirstPass.enabled = true;
+              defeatFirstPass.setEffectiveWeight(1);
+              defeatFirstPass.setEffectiveTimeScale(1);
+              defeatFirstPass.play();
+              if (previous && previous !== defeatFirstPass) {
+                previous.crossFadeTo(
+                  defeatFirstPass,
+                  DEFEAT_CROSSFADE_MS / 1000,
+                  false,
+                );
+              }
+              currentWadeActionRef.current = defeatFirstPass;
+            }
+          } else if (
+            finished === defeatFirstPassActionRef.current &&
+            wonRef.current === false
+          ) {
+            finished.stop();
+            currentWadeActionRef.current = null;
+            playWade("Wade_Defeat", true, 0, false);
           }
         });
         if (phaseRef.current === 0) playWade("Wade_BoxingIdle", true);
@@ -782,6 +881,7 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
       renderer.domElement.removeEventListener("pointerup", onPointerUp);
       renderer.domElement.removeEventListener("pointerleave", onPointerLeave);
       wadeMixerRef.current?.stopAllAction(); wadeMixerRef.current = null;
+      defeatFirstPassActionRef.current = null;
       machineMixerRef.current?.stopAllAction(); machineMixerRef.current = null;
       bloomPass.dispose();
       bokehPass.dispose();
@@ -835,29 +935,16 @@ const MegaBonkWindow: React.FC<MegaBonkWindowProps> = ({
         punchTimerRef.current = null;
         if (phaseRef.current !== 1) return;
 
-        // Crossfade wade idle → punch (smooth blend), hard-cut machine (no shared idle)
-        const wadePunch = wadeActionsRef.current["Wade_Punch"];
-        const machinePunch = machineActionsRef.current["Machine_Punch"];
+        playSynchronizedPunch();
 
-        if (wadePunch) {
-          playWade("Wade_Punch", false, 300); // 300 ms crossfade from idle
-        }
-        if (machinePunch) {
-          currentMachineActionRef.current?.stop();
-          machinePunch.reset().setLoop(THREE.LoopOnce, 1);
-          machinePunch.clampWhenFinished = true;
-          machinePunch.play();
-          currentMachineActionRef.current = machinePunch;
-        }
-
-        // Result meter movement starts at frame 31 (same as digital meter).
-        const FRAME_31_MS = Math.round((31 / 30) * 1000);
+        // One animation-owned impact cue drives the sound and both meters.
         meterTimerRef.current = setTimeout(() => {
           meterTimerRef.current = null;
           if (phaseRef.current !== 1) return;
           resultMeterActiveRef.current = true;
-        }, FRAME_31_MS);
-      }, BAG_DROP_MS);
+          onPunchImpactRef.current();
+        }, PUNCH_IMPACT_OFFSET_MS);
+      }, BAG_DROP_DURATION_MS);
     }
   }, [phase]);
 
