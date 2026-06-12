@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "tsx scripts/generateRegistry.ts",
     "dev": "next dev",
     "prebuild": "tsx scripts/generateRegistry.ts",
     "build": "next build",
