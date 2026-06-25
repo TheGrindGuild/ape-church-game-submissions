@@ -1,0 +1,36 @@
+{
+  "team": "punch-clock-games",
+  "gameName": "overtime-zombie",
+  "displayTitle": "Overtime Zombie",
+  "description": "Feed zombie snacks from the vending machine to transform the office manager. Fill the zombie meter through cascading symbol matches to release the Overtime Zombie into the HR Nightmare Arcade!",
+  "authors": [
+    {
+      "name": "Punch Clock Games",
+      "telegram": "@punchclockgames",
+      "email": "community@punchclockgames.com"
+    }
+  ],
+  "revenueShare": [
+    {
+      "name": "Punch Clock Games",
+      "telegram": "@punchclockgames",
+      "address": "0x9a513a6ea913B9B433Fa8e6a7bD1670b27bEEA9a",
+      "share": 100
+    }
+  ],
+  "status": "pending",
+  "category": "arcade",
+  "tags": [
+    "arcade",
+    "slots",
+    "cascade",
+    "zombie"
+  ],
+  "thumbnail": "/submissions/overtime-zombie/card.webp",
+  "banner": "/submissions/overtime-zombie/banner.webp",
+  "mainComponent": "OvertimeZombie.tsx",
+  "windowComponent": "OvertimeZombieWindow.tsx",
+  "setupComponent": "OvertimeZombieSetupCard.tsx",
+  "configFile": "overtimeZombieConfig.ts",
+  "version": "1.0.6"
+}
