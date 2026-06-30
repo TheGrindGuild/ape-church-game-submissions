@@ -18,6 +18,7 @@
       "share": 100
     }
   ],
+  "submittedAt": "2026-06-30",
   "status": "pending",
   "category": "arcade",
   "tags": [
@@ -26,8 +27,8 @@
     "cascade",
     "zombie"
   ],
-  "thumbnail": "/submissions/overtime-zombie/card.webp",
-  "banner": "/submissions/overtime-zombie/banner.webp",
+  "thumbnail": "/overtime-zombie/card.webp",
+  "banner": "/overtime-zombie/banner.webp",
   "mainComponent": "OvertimeZombie.tsx",
   "windowComponent": "OvertimeZombieWindow.tsx",
   "setupComponent": "OvertimeZombieSetupCard.tsx",
