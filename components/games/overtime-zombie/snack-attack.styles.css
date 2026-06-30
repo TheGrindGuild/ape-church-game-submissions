@@ -380,7 +380,7 @@ button[title="Unmute music"] {
 /* Single-image layout: the vending machine is in one fixed spot, so the Spin
    and Info buttons stay put across setup and play (no splash offset needed). */
 
-/* --- Stats Overlay (top-right) --- */
+/* --- Stats Overlay (top-right, desktop) --- */
 .sa-stats-overlay {
     position: absolute;
     top: 27px;
@@ -398,6 +398,38 @@ button[title="Unmute music"] {
     min-width: 240px;
     backdrop-filter: blur(3px);
     line-height: 1.4;
+}
+
+/* --- Stats widget, mobile portrait (above the scaled game) ---
+   Same row content as the desktop overlay. Rendered in OvertimeZombie.tsx
+   ABOVE the scaler so it stays at native viewport size — putting it
+   inside the scaler would shrink the text to unreadable on narrow
+   widths. Hidden by default; the mobile media query flips visibility. */
+.sa-stats-mobile {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 16px;
+    background: rgba(15, 20, 25, 0.85);
+    border-bottom: 1px solid rgba(200, 215, 230, 0.55);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* --- Title bar, mobile portrait (above the stats widget) ---
+   Replaces the desktop title (which is inside the scaler and gets cropped
+   off-screen by the mobile crop window). Flex with space-between leaves
+   a right-side slot ready for the eventual Ape Church Leaderboard button
+   without needing to restructure the layout when that lands. Hidden by
+   default; the mobile media query flips visibility. */
+.sa-title-mobile {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(15, 20, 25, 0.85);
 }
 
 .sa-stat-row {
@@ -1221,18 +1253,109 @@ button[title="Unmute music"] {
     margin-bottom: 8px;
 }
 
-/* --- Responsive --- */
-@media (max-width: 640px) {
-    .sa-cell-symbol {
-        font-size: 16px;
+/* --- Responsive ---
+   The narrow-viewport overrides this block USED to contain were legacy
+   patches from before the SnackAttackScaler handled responsive scaling.
+   The scaler now shrinks the whole canvas uniformly on mobile, so these
+   rules were double-shrinking specific elements (most visibly: the
+   "OVERTIME ZOMBIE / SNACK ATTACK" released banner shrank to ~5.9px
+   visual instead of filling the meter's bookend-height space).
+   Block kept as a documented placeholder in case a TRUE narrow-viewport
+   override is needed later. */
+
+/* ─────────────────────────────────────────────────────────────────────
+   MOBILE PORTRAIT LAYOUT (≤ 767px)
+   Per Ape Church reviewer feedback: stats widget moves above the
+   game art, vending machine art crops to the central column, SFX
+   button repositions to the cropped view's corner.
+   ───────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    /* Swap which title + stats widget is visible.
+       Desktop title is inside the scaler and gets cropped off on mobile;
+       the mobile title bar above the scaler replaces it. */
+    .sa-title-desktop { display: none !important; }
+    .sa-title-mobile  { display: flex !important; }
+    .sa-stats-overlay { display: none !important; }
+    .sa-stats-mobile  { display: flex !important; }
+
+    /* SFX-mute button: on desktop we override its default bottom-right
+       to bottom-left of the frame (~16px from frame's outer left edge).
+       On mobile the scaler zooms in on the central column, so the
+       frame's left edge is OFF-SCREEN. Reposition the button to sit at
+       the bottom-left of the VISIBLE viewport instead.
+
+       Math: mobile visible area starts at canvas design x = MOBILE_FOCUS_X
+       - MOBILE_DESIGN_WINDOW/2 = 713 - 350 = 363. The frame is centered
+       in the 1500px canvas with width 1382, so its left edge is at
+       canvas x = 59. Visible-area-left in frame coords = 363 - 59 = 304.
+       Add ~20px design padding so the button isn't flush against the
+       viewport edge → 324px. */
+    .sa-game-frame .absolute.bottom-4.right-4 {
+        left: 324px !important;
     }
 
-    .sa-progress-track {
-        height: 16px;
+    /* Scale up the end-of-game results modal by 20% on mobile for better
+       readability — the scaler shrinks it to ~54% on a 375px viewport,
+       and the result text + buttons feel cramped at that size. Using
+       `zoom` instead of `transform: scale` because the modal already
+       uses Framer Motion transforms for entrance animations, and zoom
+       is a separate CSS property that doesn't conflict. Targets the
+       modal's outer container (unique class chain: absolute + inset-0
+       + z-30 + flex + items-center + justify-center + p-4). */
+    .sa-game-frame .absolute.inset-0.z-30.flex.items-center.justify-center.p-4 {
+        zoom: 1.3;
+        /* Shift left to compensate for the scaler's mobile translateX —
+           the modal otherwise lands at frame center, which is ~19.5 viewport
+           px right of the actual viewport center after the scaler's
+           leftward shift. Uses the standalone `translate` CSS property
+           (not transform) so it composes cleanly with the modal's Framer
+           Motion transform animations instead of fighting them.
+           translate value tuned together with zoom: visual shift = translate
+           × zoom × scaler_scale = 28 × 1.3 × 0.536 ≈ 19.5 viewport px. */
+        translate: -28px 0;
     }
 
-    .sa-zombie-released {
-        font-size: 11px;
-        letter-spacing: 1px;
+    /* Pay Table / Game Info modal — at default 900px design width it
+       overflows the 375px mobile viewport (becomes 482px visual after
+       scaler 0.536). Narrow it to fit AND shift left to compensate for
+       the scaler's leftward mobile crop, same as the results modal above. */
+    .sa-modal {
+        max-width: 650px !important;
+        translate: -36px 0;
+    }
+
+    /* --- Expand SPIN + INFO button touch targets for mobile ---
+       At the scaler's mobile scale (0.536), the visible 55×55 design
+       icon renders as ~30 viewport px — below the iOS 44pt / Android
+       48dp recommended touch target. We grow the BUTTON to 90×90
+       design (~48 viewport px) while keeping the visible icon at its
+       original 55×55 by centering the inner <img>. Position is shifted
+       by half the size increase (17.5px on each anchor) so the visual
+       icon stays at the SAME viewport spot — only the tappable hit
+       area extends invisibly around it. */
+    .sa-spin-button {
+        width: 90px !important;
+        height: 90px !important;
+        right: calc(37% - 128.5px) !important;
+        top: calc(50% - 92.5px) !important;
+    }
+    .sa-info-button {
+        width: 90px !important;
+        height: 90px !important;
+        right: calc(37% - 127.5px) !important;
+        top: calc(88% - 57.5px) !important;
+    }
+    .sa-spin-button-img,
+    .sa-info-button img {
+        /* position: absolute is required for top/left/right/bottom to apply.
+           Spin's desktop CSS already has it; info's doesn't, so we set it
+           here explicitly to keep both behaving the same. */
+        position: absolute !important;
+        width: 55px !important;
+        height: 55px !important;
+        top: 17.5px !important;
+        left: 17.5px !important;
+        right: auto !important;
+        bottom: auto !important;
     }
 }

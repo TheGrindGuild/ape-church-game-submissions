@@ -6,6 +6,7 @@ import { Game, randomBytes } from "@/lib/games";
 import { bytesToHex } from "viem";
 import { toast } from "sonner";
 import GameWindow from "@/components/shared/GameWindow";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import OvertimeZombieWindow from "./OvertimeZombieWindow";
 import OvertimeZombieScaler from "./OvertimeZombieScaler";
 import {
@@ -38,6 +39,8 @@ import {
     RESTOCK_DURATION,
     RESTOCK_SETTLE_DELAY,
     CELL_RESTOCK_DURATION,
+    formatApeCompact,
+    formatApeFull,
 } from "./overtimeZombieConfig";
 import { playSound, playSoundInstant, preloadSounds, setSoundMuted, matchSoundForCount } from "./soundManager";
 import "./snack-attack.styles.css";
@@ -832,13 +835,70 @@ const OvertimeZombieComponent: React.FC<OvertimeZombieComponentProps> = ({ game 
 
     const shouldShowPNL = !!payout && payout > 0 && payout > betAmount;
 
+    // Live data for the mobile stats widget. Mirrors what OvertimeZombieWindow
+    // computes for its desktop overlay so both surfaces show identical values.
+    const liveWonForMobile = (payout ?? 0) + gameState.totalPayoutThisSpin;
+    const perSpinForMobile = numberOfSpins > 0 ? betAmount / numberOfSpins : betAmount;
+    const formatAmountMobile = (val: number): string =>
+        `${val.toLocaleString([], { minimumFractionDigits: 0, maximumFractionDigits: 3 })} APE`;
+
     return (
         <div>
+            {/* Mobile-only title bar — sits ABOVE the scaler (so it renders
+                at native viewport size) and ABOVE the mobile stats widget.
+                Flex layout with space-between leaves a slot on the right
+                for the eventual Ape Church Leaderboard button to drop in
+                without restructuring the layout. */}
+            <div className="sa-title-mobile">
+                <h1 className="text-2xl font-semibold">{game.title}</h1>
+                {/* Future: Leaderboard button slot — render here when wired up. */}
+            </div>
+
+            {/* Mobile-only stats bar — sits ABOVE the scaler so it renders at
+                native viewport size (the scaler's transform would otherwise
+                shrink the text to unreadable on narrow viewports). Same four
+                rows + dividers as the desktop top-right widget; CSS hides
+                whichever isn't appropriate for the current viewport width. */}
+            {currentView === 1 && (
+                <div className="sa-stats-mobile">
+                    <div className="sa-stat-row">
+                        <span className="sa-stat-label">Spins Left</span>
+                        <span className="sa-stat-value">{spinsRemaining}</span>
+                    </div>
+                    <div className="sa-stat-divider" />
+                    <div className="sa-stat-row">
+                        <span className="sa-stat-label">Won</span>
+                        <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className={`sa-stat-value sa-stat-value-tooltip ${liveWonForMobile > 0 ? "sa-stat-win" : ""}`}>
+                                        {formatApeCompact(liveWonForMobile)}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent className="sa-tooltip-hint">
+                                    {formatApeFull(liveWonForMobile)}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                    <div className="sa-stat-divider" />
+                    <div className="sa-stat-row">
+                        <span className="sa-stat-label">Wagered</span>
+                        <span className="sa-stat-value">{formatAmountMobile(totalWagered)}</span>
+                    </div>
+                    <div className="sa-stat-row">
+                        <span className="sa-stat-label">Per Spin</span>
+                        <span className="sa-stat-value">{formatAmountMobile(perSpinForMobile)}</span>
+                    </div>
+                </div>
+            )}
             <OvertimeZombieScaler>
-            {/* Title sits inside the scaler with the same max-w/centering as
-                the game frame so they share the same left edge at every
-                viewport (both scale together as one unit). */}
-            <div className="flex flex-row mb-2 sm:mb-4 max-w-[1382px] mx-auto">
+            {/* Desktop title — sits inside the scaler with the same
+                max-w/centering as the game frame so they share the same
+                left edge at every viewport (both scale together as one
+                unit). Hidden on mobile; the mobile title bar above the
+                scaler takes over there. */}
+            <div className="sa-title-desktop flex flex-row mb-2 sm:mb-4 max-w-[1382px] mx-auto">
                 <h1 className="text-3xl font-semibold mr-2">
                     {game.title}
                 </h1>
@@ -870,6 +930,7 @@ const OvertimeZombieComponent: React.FC<OvertimeZombieComponentProps> = ({ game 
                     resultModalDelayMs={1000}
                     onSfxMutedChange={setSoundMuted}
                     disableBuiltInSong={true}
+                    customHeightMobile="600px"
                 >
                     <OvertimeZombieWindow
                         game={game}

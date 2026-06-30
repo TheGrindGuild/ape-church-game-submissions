@@ -33,5 +33,5 @@
   "windowComponent": "OvertimeZombieWindow.tsx",
   "setupComponent": "OvertimeZombieSetupCard.tsx",
   "configFile": "overtimeZombieConfig.ts",
-  "version": "1.0.6"
+  "version": "1.0.7"
 }
