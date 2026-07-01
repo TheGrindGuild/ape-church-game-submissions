@@ -1,0 +1,1361 @@
+/* ============================================
+   Snack Attack - Retro/Pixel Arcade Styles
+   ============================================ */
+
+/* --- Retro Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* --- Background handling ---
+   The shared GameWindow renders the background through next/Image with a fixed
+   width={719}, which serves a low-res optimized variant that blurs when scaled up.
+   We hide that <img> and paint the full-resolution file via CSS background-image
+   on the GameWindow container instead, so it stays crisp at any size. */
+img[alt="Game Background"] {
+    opacity: 0 !important;
+}
+
+/* --- Background layer stack (crossfading meter-stage backgrounds) --- */
+.sa-bg-stack {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.sa-bg-base,
+.sa-bg-layer,
+.sa-bg-bonus {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Starting background is always painted as the base — no flash on resets */
+.sa-bg-base {
+    opacity: 1;
+}
+
+/* Stage layers crossfade smoothly on top of the base as the meter climbs */
+.sa-bg-layer {
+    opacity: 0;
+    transition: opacity 0.45s ease;
+}
+
+.sa-bg-bonus {
+    opacity: 0;
+}
+
+.sa-bg-layer[data-active="true"] {
+    opacity: 1;
+}
+
+/* Bonus background pops in instantly (no transition) to feel distinct */
+.sa-bg-bonus[data-active="true"] {
+    opacity: 1;
+}
+
+/* --- Kick shake: applied to background and board when body has .sa-kicking --- */
+@keyframes sa-kick-shake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-5px, -2px); }
+    20% { transform: translate(5px, 3px); }
+    30% { transform: translate(-4px, 2px); }
+    40% { transform: translate(4px, -2px); }
+    50% { transform: translate(-3px, 3px); }
+    60% { transform: translate(3px, -3px); }
+    70% { transform: translate(-2px, 1px); }
+    80% { transform: translate(2px, -1px); }
+    90% { transform: translate(-1px, 1px); }
+}
+
+body.sa-kicking img[alt="Game Background"],
+body.sa-kicking .sa-vending-overlay {
+    animation: sa-kick-shake 0.16s ease-out 3;
+}
+
+/* --- Hide native number-input up/down arrows (BetAmountInput uses .no-spinner) --- */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.no-spinner {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Hoverable Won stat — same affordance as the wager (i) hint. */
+.sa-stat-value-tooltip {
+    cursor: help;
+}
+
+/* Hide the GameWindow's "Mute music" button — we have no background music
+   (disableBuiltInSong is set), so the control would be misleading. Targets
+   the button by its title attribute since GameWindow.tsx is shared/platform
+   code we can't edit directly. */
+button[title="Mute music"],
+button[title="Unmute music"] {
+    display: none !important;
+}
+
+/* Move the SFX-mute button cluster from bottom-right to bottom-left —
+   our dark vending machine + late-stage backgrounds swallow the dark
+   button on the right side. Scoped to .sa-game-frame so it only
+   affects our window, not other games on the platform. */
+.sa-game-frame .absolute.bottom-4.right-4 {
+    right: auto !important;
+    left: 1rem !important;
+}
+
+/* CustomSlider renders its own mobile-only preset row (md:hidden), which
+   duplicates the always-visible preset row we render in SetupOverlay.
+   At narrow viewports both appeared, pushing the bet/per-spin readout
+   below the vending machine display. Suppress the slider's copy here so
+   our explicit row stays the single source of truth on every screen size. */
+.sa-setup-content .grid.grid-cols-3.md\:hidden {
+    display: none !important;
+}
+
+/* Visually disable the Rewatch button in the end-of-game results modal
+   until the Ape Church blockchain integration provides deterministic
+   replay (seeded RNG keyed by gameId + userRandomWord — see HRNIGHT-146's
+   deferred half). The shared GameResultsModal doesn't expose a disabled
+   prop for the Rewatch button, so we target the 2nd button in the
+   Reset+Rewatch flex row (Reset is always 1st, Rewatch is 2nd when shown).
+   The onRewatch handler in OvertimeZombie.tsx is already a no-op fallback in
+   case this CSS rule is bypassed somehow. */
+.sa-game-frame .w-full.flex.flex-row.gap-3 > button:nth-child(2) {
+    opacity: 0.4 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+
+/* --- Neon green tooltip hint --- */
+.sa-tooltip-hint {
+    background: #39FF14 !important;
+    border: 1px solid #39FF14 !important;
+    color: #000 !important;
+    font-family: monospace !important;
+    font-size: 10px !important;
+    padding: 6px 10px !important;
+    max-width: 220px !important;
+    box-shadow: 0 0 12px rgba(57, 255, 20, 0.35);
+}
+
+/* --- Widescreen game frame: enforce the background image's aspect ratio --- */
+.sa-game-frame {
+    aspect-ratio: 2498 / 1696;
+    /* Dial this to scale the whole game up/down (was ~1152px at max-w-6xl) */
+    max-width: 1382px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Force the GameWindow (direct child) to fill the frame height */
+.sa-game-frame > div {
+    height: 100%;
+}
+
+/* --- Game Container --- */
+.sa-game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    width: 90%;
+    max-width: 520px;
+    position: relative;
+    z-index: 10;
+}
+
+/* --- Vending Machine Overlay --- */
+.sa-vending-overlay {
+    position: absolute;
+    left: calc(23.21% + 97px);
+    right: calc(40.21% - 97px);
+    top: calc(34.9% - 72px);
+    bottom: calc(15.9% + 72px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Clip everything except the top, so floating multiplier text can extend above */
+    overflow: visible;
+    clip-path: inset(-80px -6px -9px -6px);
+    padding: 2%;
+}
+
+/* --- Setup Overlay (positioned in the vending machine black display area) --- */
+.sa-setup-overlay {
+    position: absolute;
+    left: calc(26% + 96px);
+    right: calc(43% - 96px);
+    top: calc(42% - 72px);
+    bottom: 22%;
+    z-index: 10;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
+    padding: 8px 12px;
+    transform: scale(1.05);
+    transform-origin: center center;
+}
+
+.sa-setup-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* --- Place Your Bet button positioned over the snack door (same Y as the meter during play) --- */
+.sa-place-bet-overlay {
+    position: absolute;
+    /* Centered under the setup info chunk */
+    left: calc(26% + 102px);
+    right: calc(43% - 102px);
+    top: calc(82% - 38px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.sa-place-bet-button {
+    width: calc(80% + 30px);
+    padding: 16px 12px;
+    border-radius: 4px;
+    color: white;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 1px;
+    border: 2px solid;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sa-place-bet-button:hover:not(:disabled) {
+    transform: scale(1.02);
+}
+
+.sa-place-bet-button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.sa-place-bet-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Make all text in the setup overlay consistent at 14px, retro arcade font */
+.sa-setup-content,
+.sa-setup-content * {
+    font-size: 14px !important;
+    font-family: 'Press Start 2P', monospace !important;
+}
+
+.sa-setup-content button {
+    font-size: 14px !important;
+    font-family: 'Press Start 2P', monospace !important;
+}
+
+/* Condense the APE coin input row to match the icon height (~20px), no background */
+.sa-setup-content .bg-gray-900\/70 {
+    background: transparent !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.sa-setup-content .bg-gray-900\/70 input {
+    padding: 0 !important;
+    line-height: 20px !important;
+    height: 20px !important;
+}
+
+/* Quick-add (+5/+10/+25/+50) and spin preset (3/5/10) buttons at normal size */
+.sa-setup-content .grid-cols-4 button,
+.sa-setup-content .grid-cols-3 button {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    line-height: 1.4 !important;
+}
+
+/* Tighten the Total Bet Amount / Per Spin preview rows */
+.sa-setup-preview > div {
+    line-height: 1.1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* --- Spin Button (positioned on vending machine keypad) --- */
+.sa-spin-button {
+    position: absolute;
+    right: calc(37% - 111px);
+    top: calc(50% - 75px);
+    width: 55px;
+    height: 55px;
+    z-index: 15;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.sa-spin-button-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.sa-spin-button-img-alt {
+    opacity: 0;
+}
+
+.sa-spin-button-active .sa-spin-button-img-alt {
+    animation: sa-spin-flash 0.6s steps(1, end) infinite;
+}
+
+@keyframes sa-spin-flash {
+    0%, 49% { opacity: 0; }
+    50%, 100% { opacity: 1; }
+}
+
+.sa-spin-button:hover:not(.sa-spin-button-disabled) {
+    transform: scale(1.05);
+}
+
+.sa-spin-button:active:not(.sa-spin-button-disabled) {
+    transform: scale(0.95);
+}
+
+.sa-spin-button-disabled {
+    cursor: not-allowed;
+}
+
+.sa-spin-button-disabled .sa-spin-button-img-base {
+    filter: brightness(0.5);
+}
+
+/* --- Info Button (positioned below coin return) --- */
+.sa-info-button {
+    position: absolute;
+    right: calc(37% - 110px);
+    top: calc(88% - 40px);
+    width: 55px;
+    height: 55px;
+    z-index: 15;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.sa-info-button img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.sa-info-button:hover {
+    transform: scale(1.1);
+}
+
+.sa-info-button:active {
+    transform: scale(0.95);
+}
+
+/* Single-image layout: the vending machine is in one fixed spot, so the Spin
+   and Info buttons stay put across setup and play (no splash offset needed). */
+
+/* --- Stats Overlay (top-right, desktop) --- */
+.sa-stats-overlay {
+    position: absolute;
+    top: 27px;
+    right: 12px;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 16px;
+    background: rgba(15, 20, 25, 0.7);
+    border: 1px solid rgba(200, 215, 230, 0.55);
+    border-radius: 4px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    min-width: 240px;
+    backdrop-filter: blur(3px);
+    line-height: 1.4;
+}
+
+/* --- Stats widget, mobile portrait (above the scaled game) ---
+   Same row content as the desktop overlay. Rendered in OvertimeZombie.tsx
+   ABOVE the scaler so it stays at native viewport size — putting it
+   inside the scaler would shrink the text to unreadable on narrow
+   widths. Hidden by default; the mobile media query flips visibility. */
+.sa-stats-mobile {
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 16px;
+    background: rgba(15, 20, 25, 0.85);
+    border-bottom: 1px solid rgba(200, 215, 230, 0.55);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* --- Title bar, mobile portrait (above the stats widget) ---
+   Replaces the desktop title (which is inside the scaler and gets cropped
+   off-screen by the mobile crop window). Flex with space-between leaves
+   a right-side slot ready for the eventual Ape Church Leaderboard button
+   without needing to restructure the layout when that lands. Hidden by
+   default; the mobile media query flips visibility. */
+.sa-title-mobile {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: rgba(15, 20, 25, 0.85);
+}
+
+.sa-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.sa-stat-label {
+    color: #91989c;
+    text-transform: uppercase;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.sa-stat-value {
+    color: #e2e8f0;
+    font-family: 'Press Start 2P', monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+.sa-stat-divider {
+    height: 1px;
+    background: rgba(145, 152, 156, 0.6);
+    margin: 4px 0;
+    flex-shrink: 0;
+}
+
+.sa-stat-win {
+    color: #4ADE80;
+}
+
+/* --- Pay Table Modal --- */
+.sa-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+}
+
+.sa-modal {
+    position: relative;
+    background: #1a2028;
+    border: 2px solid #2a3640;
+    border-radius: 8px;
+    padding: 18px 30px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90%;
+    overflow-y: auto;
+    color: #e2e8f0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 15px;
+    line-height: 1.5;
+    box-shadow: 0 0 30px rgba(220, 38, 38, 0.2);
+}
+
+/* Press Start 2P renders large; uniform modal text size for a readable table */
+.sa-modal-subtitle,
+.sa-modal-section-title,
+.sa-modal-text,
+.sa-paytable-header,
+.sa-paytable-tier-col,
+.sa-paytable-name,
+.sa-paytable-row,
+.sa-paytable-special-name,
+.sa-paytable-special-desc {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+}
+
+.sa-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: #91989c;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.sa-modal-close:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+}
+
+.sa-modal-title {
+    font-size: 21px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: #a855f7;
+    text-align: center;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    text-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
+}
+
+.sa-modal-subtitle {
+    font-size: 11px;
+    color: #91989c;
+    text-align: center;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.sa-modal-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #FACC15;
+    margin-top: 10px;
+    margin-bottom: 4px;
+}
+
+.sa-modal-text {
+    font-size: 11px;
+    color: #91989c;
+    line-height: 1.2;
+}
+
+.sa-paytable-header {
+    display: flex;
+    align-items: center;
+    padding: 2px 0 4px 0;
+    border-bottom: 1px solid #2a3640;
+    font-size: 10px;
+    color: #91989c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sa-paytable-symbol-col {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sa-paytable-tier-col {
+    flex: 1;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.sa-paytable-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 2px;
+}
+
+.sa-paytable-row {
+    display: flex;
+    align-items: center;
+    padding: 1px 0;
+    font-size: 12px;
+    color: #e2e8f0;
+    border-bottom: 1px solid rgba(42, 54, 64, 0.3);
+    line-height: 1.2;
+}
+
+.sa-paytable-icon {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.sa-paytable-name {
+    font-size: 11px;
+}
+
+.sa-paytable-special {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(42, 54, 64, 0.3);
+}
+
+.sa-paytable-special-text {
+    flex: 1;
+}
+
+.sa-paytable-special-name {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 1px;
+}
+
+.sa-paytable-special-desc {
+    font-size: 11px;
+    color: #91989c;
+    line-height: 1.2;
+}
+
+/* --- Meter Overlay (positioned over the vending machine dispenser door) --- */
+.sa-meter-overlay {
+    position: absolute;
+    left: calc(19% + 142px);
+    right: calc(36% - 62px);
+    /* Sits on the dispenser door just below the black display */
+    top: calc(82% - 41px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3.5%;
+}
+
+/* --- Floating match payoff "+N" — appears below the meter on each cascade
+   match, hides when the restock kicks in. Color matches the 'SPIN TO WIN'
+   placeholder green with a lighter green outline + soft glow. */
+.sa-match-float-overlay {
+    position: absolute;
+    /* Horizontally aligned with the meter overlay so the text centers under it */
+    left: calc(19% + 142px);
+    right: calc(36% - 62px);
+    /* Just below the meter's vertical center; the text itself animates down. */
+    top: calc(82% - 10px);
+    z-index: 11;
+    text-align: center;
+    pointer-events: none;
+}
+
+.sa-match-float-text {
+    display: inline-block;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 40px;
+    color: #39FF14;
+    /* Outline via 4-corner text-shadow + soft outer glow */
+    text-shadow:
+        -1px -1px 0 #c8ffc8,
+         1px -1px 0 #c8ffc8,
+        -1px  1px 0 #c8ffc8,
+         1px  1px 0 #c8ffc8,
+         0 0 10px rgba(57, 255, 20, 0.55);
+    /* One-shot float-in + scale-up; holds the final keyframe (translateY 55, scale 1)
+       so the text sits still after the animation rather than pulsing. */
+    animation: sa-match-float-in 0.5s ease-out forwards;
+}
+
+@keyframes sa-match-float-in {
+    0%   { transform: translateY(-6px) scale(0);    opacity: 0; }
+    55%  { transform: translateY(57px) scale(1.18); opacity: 1; }
+    80%  { transform: translateY(50px) scale(0.96); opacity: 1; }
+    100% { transform: translateY(50px) scale(1);    opacity: 1; }
+}
+
+/* No-win variant: when the spin-total rollup lands at 0 APE, recolor the
+   "+0 APE" text red to signal a no-win result. Outline + glow shift to the
+   matching red so the contrast cue is consistent with other red signals. */
+.sa-match-float-text-nowin {
+    color: #DC2626;
+    text-shadow:
+        -1px -1px 0 #ffc8c8,
+         1px -1px 0 #ffc8c8,
+        -1px  1px 0 #ffc8c8,
+         1px  1px 0 #ffc8c8,
+         0 0 10px rgba(220, 38, 38, 0.55);
+}
+
+/* Kick variant: longer "Kick the Machine!" message needs a smaller font to fit
+   the meter's horizontal bounds. Color matches the kick shoe symbol so the
+   highlighted shoes on the board and this banner read as one event. */
+.sa-match-float-text-kick {
+    font-size: 26px;
+    /* Smaller font lands the baseline higher than the +N points text — push
+       the layout origin down so the kick banner settles at the same spot. */
+    margin-top: 10px;
+    /* Gold reads as 'reward' / 'saving the spin', distinct from the red
+       attack signal and the green points color. */
+    color: #FFD700;
+    text-shadow:
+        -1px -1px 0 #000000,
+         1px -1px 0 #000000,
+        -1px  1px 0 #000000,
+         1px  1px 0 #000000,
+         0 0 12px rgba(255, 255, 255, 0.7);
+    /* Override the default float-in with a softer overshoot — the long
+       "Kick the Machine!" text spilled outside the meter bounds at 1.18x. */
+    animation: sa-match-float-in-kick 0.5s ease-out forwards;
+}
+
+@keyframes sa-match-float-in-kick {
+    0%   { transform: translateY(-6px) scale(0);    opacity: 0; }
+    55%  { transform: translateY(57px) scale(1.06); opacity: 1; }
+    80%  { transform: translateY(50px) scale(0.98); opacity: 1; }
+    100% { transform: translateY(50px) scale(1);    opacity: 1; }
+}
+
+/* Fade-out applied when restock clears the parent's floatingPayoff.
+   Holds the settled position so the text doesn't drift while fading. */
+.sa-match-float-text-fade {
+    animation: sa-match-float-out 0.18s ease-out forwards;
+}
+
+@keyframes sa-match-float-out {
+    /* Drift up ~28px while fading so the payoff feels like it's being
+       'collected' (toward the meter/stats area) rather than just popping off. */
+    0%   { transform: translateY(50px) scale(1); opacity: 1; }
+    100% { transform: translateY(22px) scale(1); opacity: 0; }
+}
+
+.sa-meter-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 80%;
+}
+
+.sa-meter-bookend {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* --- Progress Bar --- */
+.sa-progress-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sa-progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: monospace;
+    font-size: 11px;
+    color: #91989c;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.sa-progress-title {
+    font-weight: 700;
+    color: #e2e8f0;
+    text-shadow: 0 0 6px rgba(220, 38, 38, 0.5);
+}
+
+.sa-progress-points {
+    font-variant-numeric: tabular-nums;
+}
+
+.sa-progress-track {
+    position: relative;
+    flex: 1;
+    height: 42px;
+    margin-top: 4px;
+    background: #1a2028;
+    border: 2px solid #2a3640;
+    border-radius: 2px;
+    overflow: visible;
+    image-rendering: pixelated;
+}
+
+.sa-progress-fill {
+    height: 100%;
+    transition: width 0.4s ease-out, background-color 0.3s ease;
+    border-radius: 1px;
+    image-rendering: pixelated;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.sa-progress-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #3a4a5a;
+    z-index: 1;
+}
+
+.sa-progress-manager {
+    position: absolute;
+    top: -18px;
+    font-size: 16px;
+    transition: left 0.4s ease-out;
+    z-index: 2;
+    filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.6));
+}
+
+/* --- Zombie Released Message --- */
+.sa-zombie-released {
+    width: 100%;
+    text-align: center;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    font-weight: 400;
+    color: #a855f7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 2px 0;
+    line-height: 1.5;
+    animation: sa-flash 0.5s ease-in-out infinite alternate;
+    text-shadow:
+        0 0 8px rgba(168, 85, 247, 0.8),
+        0 0 16px rgba(168, 85, 247, 0.4);
+}
+
+/* Attack-phase variant: switches to red when the worker-attack scan begins */
+.sa-zombie-released.sa-zombie-released-attack {
+    color: #DC2626;
+    text-shadow:
+        0 0 8px rgba(220, 38, 38, 0.8),
+        0 0 16px rgba(220, 38, 38, 0.4);
+}
+
+.sa-meter-released {
+    width: 100%;
+    transform: translate(7px, 4px);
+}
+
+.sa-zombie-released-card {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 900;
+    color: #DC2626;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    animation: sa-flash 0.5s ease-in-out infinite alternate;
+    text-shadow:
+        0 0 8px rgba(220, 38, 38, 0.8),
+        0 0 16px rgba(220, 38, 38, 0.4);
+}
+
+@keyframes sa-flash {
+    from { opacity: 1; }
+    to { opacity: 0.6; }
+}
+
+/* --- Kick Banner --- */
+.sa-kick-banner {
+    width: 100%;
+    text-align: center;
+    font-family: monospace;
+    font-size: 16px;
+    font-weight: 900;
+    color: #F97316;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 6px 0;
+    animation: sa-kick-shake 0.15s ease-in-out infinite alternate;
+    text-shadow:
+        0 0 8px rgba(249, 115, 22, 0.8),
+        0 0 16px rgba(249, 115, 22, 0.4);
+}
+
+@keyframes sa-kick-shake {
+    0% { transform: translateX(-2px) rotate(-0.5deg); }
+    100% { transform: translateX(2px) rotate(0.5deg); }
+}
+
+/* --- Cascade Feedback --- */
+.sa-cascade-feedback {
+    font-family: monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: #facc15;
+    text-align: center;
+    animation: sa-pop 0.3s ease-out;
+    text-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
+@keyframes sa-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- Bonus Round Banner --- */
+.sa-bonus-banner {
+    width: 100%;
+    text-align: center;
+    padding: 4px 0;
+}
+
+.sa-bonus-title {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 900;
+    color: #FACC15;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    animation: sa-flash 0.5s ease-in-out infinite alternate;
+    text-shadow:
+        0 0 8px rgba(250, 204, 21, 0.8),
+        0 0 16px rgba(250, 204, 21, 0.4);
+}
+
+.sa-bonus-subtitle {
+    font-family: monospace;
+    font-size: 11px;
+    color: #91989c;
+    margin-top: 2px;
+}
+
+.sa-bonus-workers {
+    font-family: monospace;
+    font-size: 20px;
+    font-weight: 900;
+    color: #DC2626;
+    margin-top: 4px;
+    animation: sa-multiplier-pop 0.4s ease-out;
+    text-shadow: 0 0 12px rgba(220, 38, 38, 0.9);
+}
+
+@keyframes sa-multiplier-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* --- Board --- */
+.sa-board {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px;
+    background: transparent;
+    border: none;
+    width: 100%;
+    /* Allow floating multiplier text to extend above; clip drops at the bottom */
+    overflow: visible;
+    clip-path: inset(-80px -6px -9px -6px);
+}
+
+.sa-board-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sa-board-placeholder {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 24px;
+    font-weight: 400;
+    color: #39FF14;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.6;
+    text-shadow:
+        0 0 6px rgba(57, 255, 20, 0.8),
+        0 0 12px rgba(57, 255, 20, 0.4);
+    animation: sa-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes sa-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.sa-board-row {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+}
+
+/* --- Cells --- */
+.sa-cell {
+    aspect-ratio: 1 / 1;
+    width: calc((100% - 10px) / 6); /* 6 cols, 5 gaps of 2px */
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 3px;
+    position: relative;
+    /* Pin every cell to its own compositing layer so animated cells don't
+       drop layers on completion (which caused a tiny "settle" snap). */
+    transform: translateZ(0);
+}
+
+.sa-cell-symbol {
+    font-size: 48px;
+    line-height: 1;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 2px currentColor);
+}
+
+.sa-cell-sprite {
+    width: 92%;
+    height: 92%;
+    object-fit: contain;
+    image-rendering: auto;
+}
+
+/* Bonus board styling is handled by the separate .sa-bonus-frame element below.
+   (No box-shadow here — the board's top clip-path opening would leak the glow upward.) */
+
+/* Pulsing bonus-round frame — matches the vending overlay (board) bounds, not clipped */
+.sa-bonus-frame {
+    position: absolute;
+    left: calc(25% + 98px);
+    right: calc(42% - 95px);
+    top: calc(39% - 68px);
+    bottom: calc(20% + 74px);
+    z-index: 12;
+    pointer-events: none;
+    border: 3px solid #a855f7;
+    border-radius: 4px;
+    animation: sa-bonus-frame-pulse 0.9s ease-in-out infinite alternate;
+    transform: scale(1.02, 1.07);
+    transform-origin: center center;
+}
+
+@keyframes sa-bonus-frame-pulse {
+    0% {
+        /* Dimmest state still keeps ~80% of the glow so it never disappears */
+        box-shadow:
+            0 0 8px rgba(168, 85, 247, 1),
+            0 0 20px rgba(168, 85, 247, 0.85),
+            0 0 36px rgba(168, 85, 247, 0.68),
+            inset 0 0 16px rgba(168, 85, 247, 0.6);
+    }
+    100% {
+        /* outer falloff expands + brightens */
+        box-shadow:
+            0 0 8px rgba(168, 85, 247, 1),
+            0 0 22px rgba(168, 85, 247, 1),
+            0 0 44px rgba(168, 85, 247, 0.85),
+            inset 0 0 18px rgba(168, 85, 247, 0.7);
+    }
+}
+
+/* Attack-phase variant: switches to red once the worker-attack scan begins */
+.sa-bonus-frame-attack {
+    border-color: #DC2626;
+    animation: sa-bonus-frame-pulse-attack 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes sa-bonus-frame-pulse-attack {
+    0% {
+        box-shadow:
+            0 0 8px rgba(220, 38, 38, 1),
+            0 0 20px rgba(220, 38, 38, 0.85),
+            0 0 36px rgba(220, 38, 38, 0.68),
+            inset 0 0 16px rgba(220, 38, 38, 0.6);
+    }
+    100% {
+        box-shadow:
+            0 0 8px rgba(220, 38, 38, 1),
+            0 0 22px rgba(220, 38, 38, 1),
+            0 0 44px rgba(220, 38, 38, 0.85),
+            inset 0 0 18px rgba(220, 38, 38, 0.7);
+    }
+}
+
+.sa-cell-shoe {
+}
+
+.sa-cell-worker {
+}
+
+.sa-cell-dimmed {
+    opacity: 0.3;
+}
+
+.sa-cell-worker-found {
+    border-color: #DC2626 !important;
+    background: rgba(220, 38, 38, 0.3);
+    animation: sa-worker-found 0.6s ease-out;
+    box-shadow: 0 0 16px rgba(220, 38, 38, 0.8), inset 0 0 8px rgba(220, 38, 38, 0.3);
+}
+
+.sa-cell-worker-attacked {
+    border-color: #DC2626 !important;
+    background: rgba(220, 38, 38, 0.3);
+    box-shadow: 0 0 16px rgba(220, 38, 38, 0.8), inset 0 0 8px rgba(220, 38, 38, 0.3);
+}
+
+/* Floating multiplier text that appears on a worker when found */
+.sa-multiplier-float {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: #DC2626;
+    text-shadow:
+        -2px -2px 0 #FFFFFF,
+        2px -2px 0 #FFFFFF,
+        -2px 2px 0 #FFFFFF,
+        2px 2px 0 #FFFFFF,
+        -2px 0 0 #FFFFFF,
+        2px 0 0 #FFFFFF,
+        0 -2px 0 #FFFFFF,
+        0 2px 0 #FFFFFF,
+        0 0 10px rgba(220, 38, 38, 0.9);
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+    animation: sa-multiplier-float 2s ease-out forwards;
+}
+
+@keyframes sa-multiplier-float {
+    0% {
+        transform: translate(-50%, 0);
+        opacity: 0;
+    }
+    15% {
+        transform: translate(-50%, -8px);
+        opacity: 1;
+    }
+    70% {
+        transform: translate(-50%, -35px);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -60px);
+        opacity: 0;
+    }
+}
+
+@keyframes sa-worker-found {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.sa-cell-empty {
+    background: transparent;
+    border: 2px dashed #2a3640;
+    aspect-ratio: 1 / 1;
+}
+
+.sa-cell-matched {
+    border-color: currentColor;
+    background: rgba(255, 255, 255, 0.08);
+    animation: sa-match-glow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes sa-match-glow {
+    0% { box-shadow: 0 0 4px currentColor; }
+    100% { box-shadow: 0 0 14px currentColor, inset 0 0 6px rgba(255, 255, 255, 0.1); }
+}
+
+.sa-cell-dropping {
+    animation: sa-vend-drop 0.3s ease-in forwards;
+    visibility: visible;
+    z-index: 5;
+}
+
+@keyframes sa-vend-drop {
+    0% { transform: translateY(0); opacity: 1; }
+    60% { transform: translateY(110%); opacity: 0.7; }
+    100% { transform: translateY(150%); opacity: 0; }
+}
+
+/* backwards (not both) so the cell drops the transform after the animation
+   completes — keeps it on the same compositing layer as un-animated
+   neighbors and avoids sub-pixel drift during staggered cascades. */
+.sa-cell-new {
+    animation: sa-restock 0.25s ease-out backwards;
+}
+
+/* Fresh-board restock: full board reset (Spin press + Bonus round entry).
+   Adds a 360° clockwise spin on top of the scale-up to signal a new board. */
+.sa-cell-fresh-board {
+    animation: sa-restock-spin 0.5s ease-out backwards;
+}
+
+/* Cascade refill: smooth scale-in with a half-turn (180°) spin. Less
+   aggressive than the fresh-board full-revolution variant so the per-cell
+   rotation at fast 0.25s timing doesn't feel violent. */
+@keyframes sa-restock {
+    0%   { transform: scale(0.05) rotate(180deg); opacity: 0;   }
+    60%  { transform: scale(0.85) rotate(330deg); opacity: 0.7; }
+    100% { transform: scale(1)    rotate(360deg); opacity: 1;   }
+}
+
+/* Fresh-board restock: rotation is front-loaded so most of the spin is
+   visible during the scale-up rather than appearing to start after. */
+@keyframes sa-restock-spin {
+    0%   { transform: scale(0.05) rotate(0deg);   opacity: 0;    }
+    35%  { transform: scale(0.45) rotate(250deg); opacity: 0.45; }
+    65%  { transform: scale(0.9)  rotate(350deg); opacity: 0.85; }
+    85%  { transform: scale(1.08) rotate(360deg); opacity: 0.95; }
+    100% { transform: scale(1)    rotate(360deg); opacity: 1;    }
+}
+
+/* --- Vending Machine Label --- */
+.sa-vending-label {
+    font-family: monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: #3a4a5a;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-align: center;
+    padding: 4px 0;
+}
+
+/* --- Setup Header --- */
+.sa-setup-header {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+/* --- Responsive ---
+   The narrow-viewport overrides this block USED to contain were legacy
+   patches from before the SnackAttackScaler handled responsive scaling.
+   The scaler now shrinks the whole canvas uniformly on mobile, so these
+   rules were double-shrinking specific elements (most visibly: the
+   "OVERTIME ZOMBIE / SNACK ATTACK" released banner shrank to ~5.9px
+   visual instead of filling the meter's bookend-height space).
+   Block kept as a documented placeholder in case a TRUE narrow-viewport
+   override is needed later. */
+
+/* ─────────────────────────────────────────────────────────────────────
+   MOBILE PORTRAIT LAYOUT (≤ 767px)
+   Per Ape Church reviewer feedback: stats widget moves above the
+   game art, vending machine art crops to the central column, SFX
+   button repositions to the cropped view's corner.
+   ───────────────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    /* Swap which title + stats widget is visible.
+       Desktop title is inside the scaler and gets cropped off on mobile;
+       the mobile title bar above the scaler replaces it. */
+    .sa-title-desktop { display: none !important; }
+    .sa-title-mobile  { display: flex !important; }
+    .sa-stats-overlay { display: none !important; }
+    .sa-stats-mobile  { display: flex !important; }
+
+    /* SFX-mute button: on desktop we override its default bottom-right
+       to bottom-left of the frame (~16px from frame's outer left edge).
+       On mobile the scaler zooms in on the central column, so the
+       frame's left edge is OFF-SCREEN. Reposition the button to sit at
+       the bottom-left of the VISIBLE viewport instead.
+
+       Math: mobile visible area starts at canvas design x = MOBILE_FOCUS_X
+       - MOBILE_DESIGN_WINDOW/2 = 713 - 350 = 363. The frame is centered
+       in the 1500px canvas with width 1382, so its left edge is at
+       canvas x = 59. Visible-area-left in frame coords = 363 - 59 = 304.
+       Add ~20px design padding so the button isn't flush against the
+       viewport edge → 324px. */
+    .sa-game-frame .absolute.bottom-4.right-4 {
+        left: 324px !important;
+    }
+
+    /* Scale up the end-of-game results modal by 20% on mobile for better
+       readability — the scaler shrinks it to ~54% on a 375px viewport,
+       and the result text + buttons feel cramped at that size. Using
+       `zoom` instead of `transform: scale` because the modal already
+       uses Framer Motion transforms for entrance animations, and zoom
+       is a separate CSS property that doesn't conflict. Targets the
+       modal's outer container (unique class chain: absolute + inset-0
+       + z-30 + flex + items-center + justify-center + p-4). */
+    .sa-game-frame .absolute.inset-0.z-30.flex.items-center.justify-center.p-4 {
+        zoom: 1.3;
+        /* Shift left to compensate for the scaler's mobile translateX —
+           the modal otherwise lands at frame center, which is ~19.5 viewport
+           px right of the actual viewport center after the scaler's
+           leftward shift. Uses the standalone `translate` CSS property
+           (not transform) so it composes cleanly with the modal's Framer
+           Motion transform animations instead of fighting them.
+           translate value tuned together with zoom: visual shift = translate
+           × zoom × scaler_scale = 28 × 1.3 × 0.536 ≈ 19.5 viewport px. */
+        translate: -28px 0;
+    }
+
+    /* Pay Table / Game Info modal — at default 900px design width it
+       overflows the 375px mobile viewport (becomes 482px visual after
+       scaler 0.536). Narrow it to fit AND shift left to compensate for
+       the scaler's leftward mobile crop, same as the results modal above. */
+    .sa-modal {
+        max-width: 650px !important;
+        translate: -36px 0;
+    }
+
+    /* --- Expand SPIN + INFO button touch targets for mobile ---
+       At the scaler's mobile scale (0.536), the visible 55×55 design
+       icon renders as ~30 viewport px — below the iOS 44pt / Android
+       48dp recommended touch target. We grow the BUTTON to 90×90
+       design (~48 viewport px) while keeping the visible icon at its
+       original 55×55 by centering the inner <img>. Position is shifted
+       by half the size increase (17.5px on each anchor) so the visual
+       icon stays at the SAME viewport spot — only the tappable hit
+       area extends invisibly around it. */
+    .sa-spin-button {
+        width: 90px !important;
+        height: 90px !important;
+        right: calc(37% - 128.5px) !important;
+        top: calc(50% - 92.5px) !important;
+    }
+    .sa-info-button {
+        width: 90px !important;
+        height: 90px !important;
+        right: calc(37% - 127.5px) !important;
+        top: calc(88% - 57.5px) !important;
+    }
+    .sa-spin-button-img,
+    .sa-info-button img {
+        /* position: absolute is required for top/left/right/bottom to apply.
+           Spin's desktop CSS already has it; info's doesn't, so we set it
+           here explicitly to keep both behaving the same. */
+        position: absolute !important;
+        width: 55px !important;
+        height: 55px !important;
+        top: 17.5px !important;
+        left: 17.5px !important;
+        right: auto !important;
+        bottom: auto !important;
+    }
+}
