@@ -1,0 +1,37 @@
+{
+  "team": "apedroidz",
+  "gameName": "glitch-flight",
+  "displayTitle": "Glitch Flight",
+  "description": "Pick a flight target and launch the glitch droid. Reach the target multiplier before the crash and win bet x target — crash first and the bet is gone.",
+  "authors": [
+    {
+      "name": "ApeDroidz",
+      "telegram": "splitform"
+    }
+  ],
+  "revenueShare": [
+    {
+      "name": "ApeDroidz",
+      "telegram": "splitform",
+      "address": "0x1DcF1d22A1dbDd20AE875beDEEe3A259b1D608db",
+      "share": 100
+    }
+  ],
+  "status": "pending",
+  "category": "arcade",
+  "tags": [
+    "crash",
+    "arcade",
+    "flight",
+    "multiplier",
+    "limbo"
+  ],
+  "thumbnail": "/glitch-flight/card.png",
+  "banner": "/glitch-flight/banner.png",
+  "mainComponent": "MyGame.tsx",
+  "windowComponent": "MyGameWindow.tsx",
+  "setupComponent": "MyGameSetupCard.tsx",
+  "configFile": "myGameConfig.ts",
+  "version": "1.0.0",
+  "submittedAt": "2026-07-12"
+}
