@@ -150,9 +150,28 @@ const DiceOverlay: React.FC<DiceOverlayProps> = ({
                             </p>
                             {/* Win payout — brief */}
                             {isWin && currentOutcome && currentOutcome.payout > 0 && (
-                                <p className="text-xl font-black" style={{ color: "#A8E10C" }}>
-                                    +{currentOutcome.payout.toLocaleString()} APE
-                                </p>
+                                <>
+                                    <p className="text-xl font-black" style={{ color: "#A8E10C" }}>
+                                        +{currentOutcome.payout.toLocaleString()} APE
+                                    </p>
+                                    {currentOutcome.betBreakdown && currentOutcome.betBreakdown.length > 0 && (
+                                        <div className="flex flex-col items-center gap-1.5 w-full px-3">
+                                            <div className="flex flex-wrap justify-center gap-x-1 gap-y-1 w-full rounded-xl px-3 py-2"
+                                                style={{ background: "rgba(168,225,12,0.15)", border: "2px solid #A8E10C" }}>
+                                                <span className="w-full text-center text-xs font-black uppercase tracking-widest mb-0.5"
+                                                    style={{ color: "#A8E10C" }}>WIN</span>
+                                                {currentOutcome.betBreakdown.map((b, i) => (
+                                                    <div key={i} className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg"
+                                                        style={{ background: "rgba(0,0,0,0.4)" }}>
+                                                        <span className="text-base font-black" style={{ color: "#A8E10C" }}>{b.label}</span>
+                                                        <span className="text-base font-black text-white">+{b.payout.toLocaleString()}</span>
+                                                        <img src="/submissions/gimboz-craps/icons/coin.webp" alt="" style={{ width: 18, height: 18 }} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
                             )}
 
                             {/* Bonus event — big and dramatic */}
@@ -472,3 +491,4 @@ const GimbozCrapsWindow: React.FC<GimbozCrapsWindowProps> = ({
 };
 
 export default GimbozCrapsWindow;
+
