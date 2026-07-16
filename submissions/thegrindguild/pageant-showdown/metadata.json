@@ -1,0 +1,36 @@
+{
+  "team": "thegrindguild",
+  "gameName": "pageant-showdown",
+  "displayTitle": "Koda Pageant Showdown",
+  "description": "Who wins this Koda Pageant? Pick a side, watch the vote flip, and double your bet if you called it right. A head-to-head coin flip themed after KodaPageant's own voting arena.",
+  "authors": [
+    {
+      "name": "CDNHODLer",
+      "telegram": "CDNHODLer"
+    }
+  ],
+  "revenueShare": [
+    {
+      "name": "CDNHODLer",
+      "telegram": "CDNHODLer",
+      "address": "0xd5cd731d196226cd4f80fa91dab28f5d53ab8264",
+      "share": 100
+    }
+  ],
+  "status": "pending",
+  "category": "arcade",
+  "tags": [
+    "coin-flip",
+    "nft",
+    "voting",
+    "koda"
+  ],
+  "thumbnail": "/pageant-showdown/card.png",
+  "banner": "/pageant-showdown/banner.png",
+  "mainComponent": "PageantShowdown.tsx",
+  "windowComponent": "PageantShowdownWindow.tsx",
+  "setupComponent": "PageantShowdownSetupCard.tsx",
+  "configFile": "pageantShowdownConfig.ts",
+  "version": "1.0.0",
+  "submittedAt": "2026-07-16"
+}
