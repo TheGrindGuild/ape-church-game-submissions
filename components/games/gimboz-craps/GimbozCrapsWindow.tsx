@@ -101,7 +101,7 @@ const DiceOverlay: React.FC<DiceOverlayProps> = ({
                 >
                     {/* ── Monk background — static full scene, dice appear in front ── */}
                     <motion.img
-                        src="/submissions/gimboz-craps/monk-throw.png"
+                        src="/submissions/gimboz-craps/background.webp"
                         alt=""
                         initial={{ opacity: 0, scale: 1.08 }}
                         animate={{ opacity: isRolling ? 0.7 : 0.35, scale: 1 }}
@@ -323,11 +323,12 @@ const GimbozCrapsWindow: React.FC<GimbozCrapsWindowProps> = ({
             )}
 
             {/* ── BONUS ROUND overlay ─────────────────────────────── */}
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 {/* ── Game Tiles — narrative pause moments ── */}
                 {/* Bonus tiles show BEFORE the bonus round (they act as the dramatic intro) */}
                 {activeTile && !showDiceOverlay && (
                     <GameTile
+                        key={activeTile.id ?? activeTile.type}
                         tile={activeTile}
                         onDismiss={onTileDismiss}
                     />

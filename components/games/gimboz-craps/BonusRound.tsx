@@ -191,7 +191,7 @@ const FateDie3D: React.FC<{
         }
 
         return () => timers.current.forEach(t => clearTimeout(t));
-    }, [rolling, result]);
+    }, [rolling, result, dieKey, BONUS_ICONS.length]);
 
     // Pending state -- show hold icon (not a dot)
     if (!rolling && !result) {
@@ -575,6 +575,7 @@ const BonusRound: React.FC<BonusRoundProps> = ({ sessionPayout, reason, onComple
                 <div className="absolute inset-0">
                     {/* Background image */}
                     <img
+                        key={bgImage}
                         src={bgImage}
                         alt=""
                         className="absolute inset-0 w-full h-full object-cover"

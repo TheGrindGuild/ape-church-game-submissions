@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type TileType =
@@ -15,6 +15,8 @@ export type TileType =
 
 export interface TileData {
     type: TileType;
+    /** Monotonic id so repeated outcomes remount and reload images */
+    id?: number;
     pointNumber?: number;
     rollTotal?: number;
     d1?: number; d2?: number;
@@ -23,6 +25,24 @@ export interface TileData {
     wagered?: number;
     streak?: number;
     rollCount?: number;
+}
+
+const TILE_IMAGE_PATHS = [
+    "/submissions/gimboz-craps/welcome-tile.webp",
+    "/submissions/gimboz-craps/tile-natural-win.webp",
+    "/submissions/gimboz-craps/tile-point-hit.webp",
+    "/submissions/gimboz-craps/tile-seven-out.webp",
+    "/submissions/gimboz-craps/tile-craps-out.webp",
+    "/submissions/gimboz-craps/tile-sacred-trial.webp",
+    "/submissions/gimboz-craps/tile-cursed-trial.webp",
+] as const;
+
+/** Warm browser cache so round-transition tiles appear immediately */
+export function preloadGimbozTileImages() {
+    for (const src of TILE_IMAGE_PATHS) {
+        const img = new window.Image();
+        img.src = src;
+    }
 }
 
 interface GameTileProps {
@@ -38,36 +58,35 @@ const GOLD = "#FFD700";
 
 const ImageTile: React.FC<{
     src: string;
+    displayId?: number;
     onDismiss: () => void;
     autoDismissMs?: number;
     children?: React.ReactNode;
     tapToContinue?: boolean;
     childrenPosition?: "bottom" | "top"; // where to pin the overlay
-}> = ({ src, onDismiss, autoDismissMs, children, tapToContinue = true, childrenPosition = "bottom" }) => {
+}> = ({ src, displayId, onDismiss, autoDismissMs, children, tapToContinue = true, childrenPosition = "bottom" }) => {
 
     React.useEffect(() => {
         if (!autoDismissMs) return;
         const t = setTimeout(onDismiss, autoDismissMs);
         return () => clearTimeout(t);
-    }, [autoDismissMs, onDismiss]);
+    }, [autoDismissMs, onDismiss, src, displayId]);
 
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.97 }}
-            transition={{ duration: 0.18 }}
-            className="absolute inset-0 z-50"
+        <div
+            className="absolute inset-0"
             style={{ cursor: tapToContinue ? "pointer" : "default" }}
             onClick={tapToContinue ? onDismiss : undefined}
         >
             {/* Dark casino green background fills entire tile behind the image */}
             <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, #0e2210 0%, #050e06 100%)" }} />
             <img
+                key={`${displayId ?? "tile"}-${src}`}
                 src={src}
                 alt=""
                 className="absolute inset-0 w-full h-full pointer-events-none select-none"
                 style={{ objectFit: "contain", objectPosition: "center center" }}
+                decoding="async"
             />
 
             {/* Dynamic overlay content */}
@@ -93,7 +112,7 @@ const ImageTile: React.FC<{
                     Tap to continue
                 </motion.p>
             )}
-        </motion.div>
+        </div>
     );
 };
 
@@ -120,17 +139,16 @@ const PnLBadge: React.FC<{ netPnl: number; wagered: number }> = ({ netPnl, wager
 
 // ─── Individual tiles ─────────────────────────────────────────────────────────
 
-const WelcomeTile: React.FC<{ onDismiss: () => void }> = ({ onDismiss }) => (
-    <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        transition={{ duration: 0.2 }}
-        className="absolute inset-0 z-50"
-    >
-        <img src="/submissions/gimboz-craps/welcome-tile.webp" alt=""
+const WelcomeTile: React.FC<{ displayId?: number; onDismiss: () => void }> = ({ displayId, onDismiss }) => (
+    <div className="absolute inset-0">
+        <img
+            key={`welcome-${displayId ?? "tile"}`}
+            src="/submissions/gimboz-craps/welcome-tile.webp"
+            alt=""
             className="absolute inset-0 w-full h-full pointer-events-none select-none"
-            style={{ objectFit: "cover", objectPosition: "center top" }} />
+            style={{ objectFit: "cover", objectPosition: "center top" }}
+            decoding="async"
+        />
         {/* Transparent button overlaid on the gold oval — positioned at 0% from bottom, 11% tall */}
         <button
             onClick={onDismiss}
@@ -142,21 +160,21 @@ const WelcomeTile: React.FC<{ onDismiss: () => void }> = ({ onDismiss }) => (
             }}>
             ROLL THE DICE
         </button>
-    </motion.div>
+    </div>
 );
 
-const NaturalWinTile: React.FC<{ payout: number; onDismiss: () => void }> = ({ payout, onDismiss }) => (
-    <ImageTile src="/submissions/gimboz-craps/tile-natural-win.webp" onDismiss={onDismiss} autoDismissMs={2000}>
+const NaturalWinTile: React.FC<{ displayId?: number; payout: number; onDismiss: () => void }> = ({ displayId, payout, onDismiss }) => (
+    <ImageTile displayId={displayId} src="/submissions/gimboz-craps/tile-natural-win.webp" onDismiss={onDismiss} autoDismissMs={2000}>
         {payout > 0 && <PayoutBadge payout={payout} color={GOLD} />}
     </ImageTile>
 );
 
-const PointHitTile: React.FC<{ point: number; payout: number; streak: number; onDismiss: () => void }> = ({
-    point, payout, streak, onDismiss
+const PointHitTile: React.FC<{ displayId?: number; point: number; payout: number; streak: number; onDismiss: () => void }> = ({
+    displayId, point, payout, streak, onDismiss
 }) => {
     const streakColor = streak >= 3 ? "#F97316" : G;
     return (
-        <ImageTile src="/submissions/gimboz-craps/tile-point-hit.webp" onDismiss={onDismiss} autoDismissMs={2200}>
+        <ImageTile displayId={displayId} src="/submissions/gimboz-craps/tile-point-hit.webp" onDismiss={onDismiss} autoDismissMs={2200}>
             {/* Streak counter */}
             {streak > 0 && (
                 <motion.div
@@ -174,9 +192,9 @@ const PointHitTile: React.FC<{ point: number; payout: number; streak: number; on
 };
 
 const SevenOutTile: React.FC<{
-    netPnl: number; wagered: number; onDismiss: () => void;
-}> = ({ netPnl, wagered, onDismiss }) => (
-    <ImageTile src="/submissions/gimboz-craps/tile-seven-out.webp" onDismiss={onDismiss} tapToContinue={false}>
+    displayId?: number; netPnl: number; wagered: number; onDismiss: () => void;
+}> = ({ displayId, netPnl, wagered, onDismiss }) => (
+    <ImageTile displayId={displayId} src="/submissions/gimboz-craps/tile-seven-out.webp" onDismiss={onDismiss} tapToContinue={false}>
         <PnLBadge netPnl={netPnl} wagered={wagered} />
         <motion.button
             whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -189,9 +207,9 @@ const SevenOutTile: React.FC<{
 );
 
 const CrapsOutTile: React.FC<{
-    netPnl: number; wagered: number; onDismiss: () => void;
-}> = ({ netPnl, wagered, onDismiss }) => (
-    <ImageTile src="/submissions/gimboz-craps/tile-craps-out.webp" onDismiss={onDismiss} tapToContinue={false}>
+    displayId?: number; netPnl: number; wagered: number; onDismiss: () => void;
+}> = ({ displayId, netPnl, wagered, onDismiss }) => (
+    <ImageTile displayId={displayId} src="/submissions/gimboz-craps/tile-craps-out.webp" onDismiss={onDismiss} tapToContinue={false}>
         <PnLBadge netPnl={netPnl} wagered={wagered} />
         <motion.button
             whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -204,12 +222,12 @@ const CrapsOutTile: React.FC<{
 );
 
 // Bonus tiles: pure cinematic splash — no buttons, auto-dismisses after 2.5s
-const BonusStreakTile: React.FC<{ onDismiss: () => void }> = ({ onDismiss }) => (
-    <ImageTile src="/submissions/gimboz-craps/tile-sacred-trial.webp" onDismiss={onDismiss} tapToContinue={false} autoDismissMs={2500} />
+const BonusStreakTile: React.FC<{ displayId?: number; onDismiss: () => void }> = ({ displayId, onDismiss }) => (
+    <ImageTile displayId={displayId} src="/submissions/gimboz-craps/tile-sacred-trial.webp" onDismiss={onDismiss} tapToContinue={false} autoDismissMs={2500} />
 );
 
-const BonusMaxRollsTile: React.FC<{ rollCount: number; onDismiss: () => void }> = ({ rollCount, onDismiss }) => (
-    <ImageTile src="/submissions/gimboz-craps/tile-cursed-trial.webp" onDismiss={onDismiss} tapToContinue={false} autoDismissMs={2500} />
+const BonusMaxRollsTile: React.FC<{ displayId?: number; rollCount: number; onDismiss: () => void }> = ({ displayId, rollCount, onDismiss }) => (
+    <ImageTile displayId={displayId} src="/submissions/gimboz-craps/tile-cursed-trial.webp" onDismiss={onDismiss} tapToContinue={false} autoDismissMs={2500} />
 );
 
 // ─── Main export ──────────────────────────────────────────────────────────────
@@ -217,45 +235,55 @@ const BonusMaxRollsTile: React.FC<{ rollCount: number; onDismiss: () => void }> 
 const GameTile: React.FC<GameTileProps> = ({ tile, onDismiss }) => {
     if (!tile) return null;
 
+    const displayId = tile.id;
+
     return (
-        <AnimatePresence mode="wait">
-            <React.Fragment key={tile.type + (tile.pointNumber ?? "") + (tile.rollTotal ?? "")}>
-                {tile.type === "welcome" && (
-                    <WelcomeTile onDismiss={onDismiss} />
-                )}
-                {tile.type === "naturalWin" && (
-                    <NaturalWinTile payout={tile.payout ?? 0} onDismiss={onDismiss} />
-                )}
-                {tile.type === "pointHit" && tile.pointNumber != null && (
-                    <PointHitTile
-                        point={tile.pointNumber}
-                        payout={tile.payout ?? 0}
-                        streak={tile.streak ?? 1}
-                        onDismiss={onDismiss}
-                    />
-                )}
-                {tile.type === "sevenOut" && (
-                    <SevenOutTile
-                        netPnl={tile.netPnl ?? 0}
-                        wagered={tile.wagered ?? 0}
-                        onDismiss={onDismiss}
-                    />
-                )}
-                {tile.type === "crapsOut" && (
-                    <CrapsOutTile
-                        netPnl={tile.netPnl ?? 0}
-                        wagered={tile.wagered ?? 0}
-                        onDismiss={onDismiss}
-                    />
-                )}
-                {tile.type === "bonusStreak" && (
-                    <BonusStreakTile onDismiss={onDismiss} />
-                )}
-                {tile.type === "bonusMaxRolls" && (
-                    <BonusMaxRollsTile rollCount={tile.rollCount ?? 13} onDismiss={onDismiss} />
-                )}
-            </React.Fragment>
-        </AnimatePresence>
+        <motion.div
+            key={displayId ?? `${tile.type}-${tile.rollTotal ?? ""}-${tile.pointNumber ?? ""}`}
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.18 }}
+            className="absolute inset-0 z-50"
+        >
+            {tile.type === "welcome" && (
+                <WelcomeTile displayId={displayId} onDismiss={onDismiss} />
+            )}
+            {tile.type === "naturalWin" && (
+                <NaturalWinTile displayId={displayId} payout={tile.payout ?? 0} onDismiss={onDismiss} />
+            )}
+            {tile.type === "pointHit" && tile.pointNumber != null && (
+                <PointHitTile
+                    displayId={displayId}
+                    point={tile.pointNumber}
+                    payout={tile.payout ?? 0}
+                    streak={tile.streak ?? 1}
+                    onDismiss={onDismiss}
+                />
+            )}
+            {tile.type === "sevenOut" && (
+                <SevenOutTile
+                    displayId={displayId}
+                    netPnl={tile.netPnl ?? 0}
+                    wagered={tile.wagered ?? 0}
+                    onDismiss={onDismiss}
+                />
+            )}
+            {tile.type === "crapsOut" && (
+                <CrapsOutTile
+                    displayId={displayId}
+                    netPnl={tile.netPnl ?? 0}
+                    wagered={tile.wagered ?? 0}
+                    onDismiss={onDismiss}
+                />
+            )}
+            {tile.type === "bonusStreak" && (
+                <BonusStreakTile displayId={displayId} onDismiss={onDismiss} />
+            )}
+            {tile.type === "bonusMaxRolls" && (
+                <BonusMaxRollsTile displayId={displayId} rollCount={tile.rollCount ?? 13} onDismiss={onDismiss} />
+            )}
+        </motion.div>
     );
 };
 

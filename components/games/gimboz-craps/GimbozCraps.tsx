@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import GameWindow from "@/components/shared/GameWindow";
 import GimbozCrapsWindow from "./GimbozCrapsWindow";
 import GimbozCrapsSetupCard from "./GimbozCrapsSetupCard";
+import { preloadGimbozTileImages } from "./GameTile";
 import {
     gimbozCrapsGame,
     BetType,
@@ -237,16 +238,39 @@ const GimbozCraps: React.FC = () => {
     const tileTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const overlayDismissTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const rollVersionRef = React.useRef(0);
+    const tileIdRef = React.useRef(0);
     const pendingTileRef = React.useRef<import("./GameTile").TileData | null>(null);
     const [pendingIsGameEnder, setPendingIsGameEnder] = useState(false);
     const [activeTile, setActiveTile] = useState<import("./GameTile").TileData | null>(null);
     const [hasSeenWelcome, setHasSeenWelcome] = useState(false);
     const [shownPointNumber, setShownPointNumber] = useState<number | null>(null); // track which point we already showed tile for
 
+    // Preload round-transition tile art so images appear as soon as a roll resolves
+    React.useEffect(() => {
+        preloadGimbozTileImages();
+    }, []);
+
+    const assignTileId = useCallback((tile: import("./GameTile").TileData): import("./GameTile").TileData => {
+        tileIdRef.current += 1;
+        return { ...tile, id: tileIdRef.current };
+    }, []);
+
+    const revealPendingTile = useCallback(() => {
+        if (overlayDismissTimerRef.current) {
+            clearTimeout(overlayDismissTimerRef.current);
+            overlayDismissTimerRef.current = null;
+        }
+        setShowDiceOverlay(false);
+        if (pendingTileRef.current) {
+            setActiveTile(assignTileId(pendingTileRef.current));
+            pendingTileRef.current = null;
+        }
+    }, [assignTileId]);
+
     // Show welcome tile on first game
     React.useEffect(() => {
         if (!hasSeenWelcome && currentView === 0) {
-            setActiveTile({ type: "welcome" });
+            setActiveTile(assignTileId({ type: "welcome" }));
         }
     }, []);
 
@@ -267,7 +291,7 @@ const GimbozCraps: React.FC = () => {
     };
 
     const handleOverlayDismiss = () => {
-        setShowDiceOverlay(false);
+        revealPendingTile();
     };
 
     const [currentGameId, setCurrentGameId] = useState<bigint>(
@@ -727,20 +751,15 @@ const GimbozCraps: React.FC = () => {
             });
 
             setIsRolling(false);
-            // Auto-dismiss overlay after 1.5s then fire pending tile
+            // Auto-dismiss overlay then show any pending narrative tile
             if (overlayDismissTimerRef.current) clearTimeout(overlayDismissTimerRef.current);
             overlayDismissTimerRef.current = setTimeout(() => {
                 if (rollVersionRef.current === capturedVersion) {
-                    setShowDiceOverlay(false);
-                    if (pendingTileRef.current) {
-                        const tile = pendingTileRef.current;
-                        pendingTileRef.current = null;
-                        setActiveTile(tile);
-                    }
+                    revealPendingTile();
                 }
             }, 2500);
         }, 1100);
-    }, [isRolling, gameState.gameOver]);
+    }, [isRolling, gameState.gameOver, revealPendingTile]);
 
     // ─── Reset ─────────────────────────────────────────────────────────────────
 
@@ -848,8 +867,8 @@ const GimbozCraps: React.FC = () => {
 
     return (
         <div>
-            {/* items-start prevents sidebar from stretching to match game window height */}
-            <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 lg:gap-10 lg:items-start">
+            <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-8 lg:gap-10">
+                <div className="min-w-0 w-full h-full lg:basis-2/3 lg:self-stretch">
                 <GameWindow
                     game={game}
                     currentGameId={currentGameId}
@@ -890,7 +909,9 @@ const GimbozCraps: React.FC = () => {
                         onTileDismiss={dismissTile}
                     />
                 </GameWindow>
+                </div>
 
+                <div className="flex min-w-0 w-full flex-col lg:basis-1/3 lg:min-h-0 lg:self-stretch">
                 <GimbozCrapsSetupCard
                     game={game}
                     currentView={currentView}
@@ -930,6 +951,7 @@ const GimbozCraps: React.FC = () => {
                     walletBalance={walletBalance}
                     inReplayMode={replayIdString !== null}
                 />
+                </div>
             </div>
         </div>
     );

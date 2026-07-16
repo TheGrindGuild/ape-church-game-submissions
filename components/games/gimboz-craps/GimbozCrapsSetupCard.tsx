@@ -190,13 +190,103 @@ const GimbozCrapsSetupCard: React.FC<GimbozCrapsSetupCardProps> = ({
 
     const activeBetCount = Object.values(pendingBets).filter(v => (v ?? 0) > 0).length;
 
+    const playButton = () => (
+        <Button
+            onClick={onPlay}
+            disabled={totalBetAmount <= 0 || isLoading}
+            className="w-full font-black uppercase tracking-widest"
+            style={{ backgroundColor: THEME, color: "#000", borderColor: THEME }}
+        >
+            {isLoading ? "Consecrating..." : "Place Your Bet"}
+        </Button>
+    );
+
+    const ongoingActionButtons = () => (
+        <div className="flex flex-col gap-2">
+            {overlayShowing && rollHistory.length > 0 && !pendingIsGameEnder ? (
+                <>
+                    <p className="text-[10px] text-white/40 text-center uppercase tracking-widest">What next?</p>
+                    <Button onClick={onRoll}
+                        className="w-full font-black uppercase tracking-widest"
+                        style={{ backgroundColor: THEME, color: "#000" }}>
+                        <span className="flex items-center gap-2 justify-center">
+                            <img src="/submissions/gimboz-craps/icons/dice.webp" className="w-6 h-6" style={{ mixBlendMode:"darken" }} alt="" />
+                            {phase === "comeOut" ? "Come-Out Roll" : `Roll for ${point}`}
+                        </span>
+                    </Button>
+                    {phase === "point" && (
+                        <Button onClick={onAddBets} variant="secondary"
+                            className="w-full font-black uppercase tracking-widest border"
+                            style={{ borderColor: "rgba(168,225,12,0.4)", color: "#A8E10C" }}>
+                            ➕ Add Bets First
+                        </Button>
+                    )}
+                </>
+            ) : (
+                <Button onClick={onRoll} disabled={isRolling || gameState.gameOver}
+                    className="w-full font-black uppercase tracking-widest text-lg py-5"
+                    style={{ backgroundColor: THEME, color: "#000", borderColor: THEME }}>
+                    <span className="flex items-center gap-2 justify-center">
+                        <img src="/submissions/gimboz-craps/icons/dice.webp" className="w-6 h-6" style={{ mixBlendMode:"multiply" }} alt="" />
+                        {isRolling ? "Rolling..." : rollHistory.length === 0 ? "Come-Out Roll" : phase === "comeOut" ? "Come-Out Roll" : `Roll for ${point}`}
+                    </span>
+                </Button>
+            )}
+
+            {canCashOut && (
+                <Button onClick={onCashOut}
+                    className="w-full font-black uppercase tracking-widest"
+                    style={{ backgroundColor: "#FFD700", color: "#000", borderColor: "#FFD700", boxShadow: "0 0 10px rgba(255,215,0,0.25)" }}>
+                    <span className="flex items-center gap-2 justify-center">
+                        <img src="/submissions/gimboz-craps/icons/coin.webp" className="w-6 h-6" alt="" />
+                        Cash Out {totalPayout.toLocaleString()} APE
+                    </span>
+                </Button>
+            )}
+
+            <button onClick={onReset}
+                className="w-full text-center text-[10px] text-white/25 hover:text-white/50 transition-colors py-1 uppercase tracking-widest">
+                ↩ Change Bets / New Game
+            </button>
+        </div>
+    );
+
+    const gameOverActionButtons = () => (
+        <div className="flex flex-col gap-2">
+            <Button
+                onClick={onSameBetsAgain}
+                className="w-full font-black uppercase tracking-widest text-lg py-5"
+                style={{ backgroundColor: THEME, color: "#000", borderColor: THEME }}
+            >
+                <span className="flex items-center gap-2 justify-center">
+                    <img src="/submissions/gimboz-craps/icons/dice.webp" className="w-6 h-6" style={{ mixBlendMode:"multiply" }} alt="" />
+                    Same Bets Again
+                </span>
+            </Button>
+            <Button
+                onClick={onReset}
+                variant="secondary"
+                className="w-full font-black uppercase tracking-widest"
+            >
+                Change Bets
+            </Button>
+            <Button onClick={onRewatch} variant="secondary" className="w-full text-xs opacity-60">
+                Rewatch Last Game
+            </Button>
+        </div>
+    );
+
     return (
-        <Card className="lg:basis-1/3 flex flex-col p-4 gap-2" style={{ maxHeight: "719px", overflowY: "auto", overflowX: "hidden" }}>
+        <Card className="h-full min-h-0 w-full flex flex-col overflow-hidden p-4 gap-2">
 
             {/* ── SETUP VIEW ──────────────────────────────────────────── */}
             {currentView === 0 && (
                 <>
-                    <CardContent className="p-0 flex flex-col gap-4">
+                    <div className="shrink-0 lg:hidden">
+                        {playButton()}
+                    </div>
+
+                    <CardContent className="p-0 flex flex-col gap-4 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
 
                         {/* USD toggle (aesthetic, matches roulette) */}
                         <div className="flex items-center justify-between">
@@ -259,7 +349,7 @@ const GimbozCrapsSetupCard: React.FC<GimbozCrapsSetupCardProps> = ({
                         <Button
                             onClick={onPlay}
                             disabled={totalBetAmount <= 0 || isLoading}
-                            className="w-full font-black uppercase tracking-widest mt-2"
+                            className="hidden lg:flex w-full font-black uppercase tracking-widest mt-2"
                             style={{ backgroundColor: THEME, color: "#000", borderColor: THEME }}
                         >
                             {isLoading ? "Consecrating..." : "Place Your Bet"}
@@ -281,7 +371,12 @@ const GimbozCrapsSetupCard: React.FC<GimbozCrapsSetupCardProps> = ({
 
             {/* ── ONGOING VIEW ────────────────────────────────────────── */}
             {currentView === 1 && !bonusActive && (
-                <CardContent className="p-0 flex flex-col gap-3 h-full">
+                <>
+                    <div className="shrink-0 lg:hidden">
+                        {ongoingActionButtons()}
+                    </div>
+
+                <CardContent className="p-0 flex flex-col gap-3 h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
 
                     {/* Live session stats — only show after first roll */}
                     {rollHistory.length > 0 ? (
@@ -483,67 +578,24 @@ const GimbozCrapsSetupCard: React.FC<GimbozCrapsSetupCardProps> = ({
                         </div>{/* end scrollable inner div */}
                     </div>
 
-                    <div className="grow" />
+                    <div className="grow hidden lg:block" />
 
-                    {/* P&L lives in SESSION box at top — no duplicate here */}
-
-                    {/* ── Action buttons ──────────────────────────────── */}
-                    <div className="flex flex-col gap-2">
-                        {/* After-roll choices — only show after at least 1 roll */}
-                        {overlayShowing && rollHistory.length > 0 && !pendingIsGameEnder ? (
-                            <>
-                                <p className="text-[10px] text-white/40 text-center uppercase tracking-widest">What next?</p>
-                                <Button onClick={onRoll}
-                                    className="w-full font-black uppercase tracking-widest"
-                                    style={{ backgroundColor: THEME, color: "#000" }}>
-                                    <span className="flex items-center gap-2 justify-center">
-                                        <img src="/submissions/gimboz-craps/icons/dice.webp" className="w-6 h-6" style={{ mixBlendMode:"darken" }} alt="" />
-                                        {phase === "comeOut" ? "Come-Out Roll" : `Roll for ${point}`}
-                                    </span>
-                                </Button>
-                                {phase === "point" && (
-                                    <Button onClick={onAddBets} variant="secondary"
-                                        className="w-full font-black uppercase tracking-widest border"
-                                        style={{ borderColor: "rgba(168,225,12,0.4)", color: "#A8E10C" }}>
-                                        ➕ Add Bets First
-                                    </Button>
-                                )}
-                            </>
-                        ) : (
-                            <Button onClick={onRoll} disabled={isRolling || gameState.gameOver}
-                                className="w-full font-black uppercase tracking-widest text-lg py-5"
-                                style={{ backgroundColor: THEME, color: "#000", borderColor: THEME }}>
-                                <span className="flex items-center gap-2 justify-center">
-                                    <img src="/submissions/gimboz-craps/icons/dice.webp" className="w-6 h-6" style={{ mixBlendMode:"multiply" }} alt="" />
-                                    {isRolling ? "Rolling..." : rollHistory.length === 0 ? "Come-Out Roll" : phase === "comeOut" ? "Come-Out Roll" : `Roll for ${point}`}
-                                </span>
-                            </Button>
-                        )}
-
-                        {/* Cash Out — always visible when payout exists */}
-                        {canCashOut && (
-                            <Button onClick={onCashOut}
-                                className="w-full font-black uppercase tracking-widest"
-                                style={{ backgroundColor: "#FFD700", color: "#000", borderColor: "#FFD700", boxShadow: "0 0 10px rgba(255,215,0,0.25)" }}>
-                                <span className="flex items-center gap-2 justify-center">
-                                    <img src="/submissions/gimboz-craps/icons/coin.webp" className="w-6 h-6" alt="" />
-                                    Cash Out {totalPayout.toLocaleString()} APE
-                                </span>
-                            </Button>
-                        )}
-
-                        {/* Change Bets — subtle link, not a prominent button */}
-                        <button onClick={onReset}
-                            className="w-full text-center text-[10px] text-white/25 hover:text-white/50 transition-colors py-1 uppercase tracking-widest">
-                            ↩ Change Bets / New Game
-                        </button>
+                    {/* ── Action buttons — desktop only (mobile shown above) ── */}
+                    <div className="hidden lg:flex flex-col gap-2 shrink-0">
+                        {ongoingActionButtons()}
                     </div>
                 </CardContent>
+                </>
             )}
 
             {/* ── GAME OVER VIEW ──────────────────────────────────────── */}
             {currentView === 2 && (
-                <CardContent className="p-0 flex flex-col gap-3 h-full">
+                <>
+                    <div className="shrink-0 lg:hidden">
+                        {gameOverActionButtons()}
+                    </div>
+
+                <CardContent className="p-0 flex flex-col gap-3 h-full min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
                     <div className="text-center">
                         {(() => {
                             const wagered = gameState.initialWagered || totalBetAmount;
@@ -609,30 +661,13 @@ const GimbozCrapsSetupCard: React.FC<GimbozCrapsSetupCardProps> = ({
                         </details>
                     )}
 
-                    <div className="flex flex-col gap-2">
-                        {/* Same Bets Again — one click instant replay */}
-                        <Button
-                            onClick={onSameBetsAgain}
-                            className="w-full font-black uppercase tracking-widest text-lg py-5"
-                            style={{ backgroundColor: THEME, color: "#000", borderColor: THEME }}
-                        >
-                            <span className="flex items-center gap-2 justify-center">
-                                <img src="/submissions/gimboz-craps/icons/dice.webp" className="w-6 h-6" style={{ mixBlendMode:"multiply" }} alt="" />
-                                Same Bets Again
-                            </span>
-                        </Button>
-                        <Button
-                            onClick={onReset}
-                            variant="secondary"
-                            className="w-full font-black uppercase tracking-widest"
-                        >
-                            Change Bets
-                        </Button>
-                        <Button onClick={onRewatch} variant="secondary" className="w-full text-xs opacity-60">
-                            Rewatch Last Game
-                        </Button>
+                    <div className="grow hidden lg:block" />
+
+                    <div className="hidden lg:flex flex-col gap-2 shrink-0">
+                        {gameOverActionButtons()}
                     </div>
                 </CardContent>
+                </>
             )}
         </Card>
     );
