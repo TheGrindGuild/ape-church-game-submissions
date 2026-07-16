@@ -25,8 +25,8 @@
     "voting",
     "koda"
   ],
-  "thumbnail": "/submissions/pageant-showdown/card.png",
-  "banner": "/submissions/pageant-showdown/banner.png",
+  "thumbnail": "/pageant-showdown/card.png",
+  "banner": "/pageant-showdown/banner.png",
   "mainComponent": "PageantShowdown.tsx",
   "windowComponent": "PageantShowdownWindow.tsx",
   "setupComponent": "PageantShowdownSetupCard.tsx",
