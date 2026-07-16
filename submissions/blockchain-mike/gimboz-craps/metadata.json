@@ -1,0 +1,31 @@
+{
+  "team": "blockchain-mike",
+  "gameName": "gimboz-craps",
+  "displayTitle": "Shake, Rattle & Roll",
+  "description": "Full casino craps on the sacred altar of the Ape Church. Play as Gimboz the monk — roll the bone dice, chase the point, and hit 4 in a row to unlock the Sacred Trial bonus round with multipliers up to 500x.",
+  "authors": [
+    {
+      "name": "blockchain-Mike",
+      "telegram": "@Shutchuface"
+    }
+  ],
+  "revenueShare": [
+    {
+      "name": "blockchain-Mike",
+      "telegram": "@Shutchuface",
+      "address": "0x80F5B94391579b96E55D1b08691Ac779Ce335398",
+      "share": 100
+    }
+  ],
+  "status": "pending",
+  "category": "other",
+  "tags": ["craps", "dice", "table", "gothic", "bonus", "gimboz"],
+  "thumbnail": "/gimboz-craps/card.webp",
+  "banner": "/gimboz-craps/banner.webp",
+  "mainComponent": "GimbozCraps.tsx",
+  "windowComponent": "GimbozCrapsWindow.tsx",
+  "setupComponent": "GimbozCrapsSetupCard.tsx",
+  "configFile": "gimbozCrapsConfig.ts",
+  "version": "1.0.0",
+  "submittedAt": "2026-04-27"
+}
