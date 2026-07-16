@@ -18,6 +18,8 @@ interface PageantShowdownWindowProps {
     payoutAmount: number;
     leftKoda: KodaEntry;
     rightKoda: KodaEntry;
+    sideSelectionEnabled?: boolean;
+    onSelectSide?: (side: PageantSide) => void;
 }
 
 const CONFETTI_COLORS = ["#fbbf24", "#34d399", "#60a5fa", "#f472b6", "#a78bfa", "#f87171"];
@@ -32,6 +34,8 @@ const PageantShowdownWindow: React.FC<PageantShowdownWindowProps> = ({
     payoutAmount,
     leftKoda,
     rightKoda,
+    sideSelectionEnabled = false,
+    onSelectSide,
 }) => {
     const muteSfx = false;
     const sfxVolume = 0.5;
@@ -101,6 +105,8 @@ const PageantShowdownWindow: React.FC<PageantShowdownWindowProps> = ({
                     isRevealing={isRevealing}
                     isWinner={gameCompleted && outcome === "left"}
                     isWrongPick={gameCompleted && chosenSide === "left" && outcome !== "left"}
+                    selectable={sideSelectionEnabled}
+                    onSelect={() => onSelectSide?.("left")}
                 />
 
                 <div className="flex flex-col items-center justify-center z-10 shrink-0">
@@ -117,6 +123,8 @@ const PageantShowdownWindow: React.FC<PageantShowdownWindowProps> = ({
                     isRevealing={isRevealing}
                     isWinner={gameCompleted && outcome === "right"}
                     isWrongPick={gameCompleted && chosenSide === "right" && outcome !== "right"}
+                    selectable={sideSelectionEnabled}
+                    onSelect={() => onSelectSide?.("right")}
                 />
 
                 <AnimatePresence>
@@ -176,6 +184,8 @@ interface PageantPortraitProps {
     isRevealing: boolean;
     isWinner: boolean;
     isWrongPick: boolean;
+    selectable?: boolean;
+    onSelect?: () => void;
 }
 
 const PageantPortrait: React.FC<PageantPortraitProps> = ({
@@ -185,17 +195,28 @@ const PageantPortrait: React.FC<PageantPortraitProps> = ({
     isRevealing,
     isWinner,
     isWrongPick,
+    selectable = false,
+    onSelect,
 }) => {
-    const borderColor = isWinner ? "#22c55e" : isWrongPick ? "#ef4444" : "#2A3640";
+    const borderColor = isWinner ? "#22c55e" : isWrongPick ? "#ef4444" : isChosen ? "#fbbf24" : "#2A3640";
     const glow = isWinner
         ? "0 0 20px rgba(34,197,94,0.5)"
         : isWrongPick
         ? "0 0 16px rgba(239,68,68,0.45)"
+        : isChosen
+        ? "0 0 14px rgba(251,191,36,0.45)"
         : "none";
 
     return (
-        <motion.div
-            className="relative w-[38%] max-w-[220px] aspect-square rounded-xl overflow-hidden border-4"
+        <motion.button
+            type="button"
+            disabled={!selectable}
+            onClick={() => selectable && onSelect?.()}
+            aria-label={`Pick Koda #${tokenId}`}
+            aria-pressed={isChosen}
+            className={`relative w-[38%] max-w-[220px] aspect-square rounded-xl overflow-hidden border-4 p-0 text-left ${
+                selectable ? "cursor-pointer hover:ring-2 hover:ring-amber-400/50" : "cursor-default"
+            }`}
             style={{ borderColor, boxShadow: glow }}
             animate={
                 isRevealing
@@ -219,7 +240,7 @@ const PageantPortrait: React.FC<PageantPortraitProps> = ({
                     YOUR PICK
                 </div>
             )}
-        </motion.div>
+        </motion.button>
     );
 };
 

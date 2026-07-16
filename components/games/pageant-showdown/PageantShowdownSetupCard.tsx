@@ -51,14 +51,33 @@ const PageantShowdownSetupCard: React.FC<PageantShowdownSetupCardProps> = ({
     const [usdMode, setUsdMode] = useState<boolean>(false);
     const canPlay = currentView === 0 && !isLoading && !inReplayMode && chosenSide !== null && betAmount > 0;
 
+    const flipButton = (extraClassName = "") => (
+        <Button
+            className={cn(
+                "w-full bg-amber-500 hover:bg-amber-400 text-black font-bold",
+                extraClassName
+            )}
+            disabled={!canPlay}
+            onClick={onPlay}
+        >
+            {isLoading ? "Flipping…" : "Flip the Vote"}
+        </Button>
+    );
+
     return (
         <Card
             className={cn(
-                "lg:basis-1/3 w-full h-fit bg-[#12181C] border-[#2A3640] text-white",
+                "w-full h-full min-h-0 flex flex-col overflow-hidden bg-[#12181C] border-[#2A3640] text-white",
                 className
             )}
         >
-            <CardContent className="flex flex-col gap-4 pt-4">
+            {currentView === 0 && (
+                <div className="shrink-0 lg:hidden px-6 pt-4">
+                    {flipButton()}
+                </div>
+            )}
+
+            <CardContent className="flex flex-col gap-4 pt-4 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
                 <div>
                     <p className="text-xs uppercase tracking-wide text-white/50 mb-2">Pick a side</p>
                     <div className="grid grid-cols-2 gap-2">
@@ -98,16 +117,12 @@ const PageantShowdownSetupCard: React.FC<PageantShowdownSetupCardProps> = ({
                 <p className="text-xs text-white/50 text-center">
                     Call it right: <span className="text-amber-300 font-semibold">{winMultiplier}x</span> payout. Call it wrong: nothing.
                 </p>
+
+                <div className="grow hidden lg:block" />
             </CardContent>
 
-            <CardFooter>
-                <Button
-                    className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold"
-                    disabled={!canPlay}
-                    onClick={onPlay}
-                >
-                    {isLoading ? "Flipping…" : "Flip the Vote"}
-                </Button>
+            <CardFooter className="hidden lg:flex shrink-0">
+                {flipButton()}
             </CardFooter>
         </Card>
     );

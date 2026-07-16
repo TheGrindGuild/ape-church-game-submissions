@@ -221,12 +221,17 @@ const PageantShowdownComponent: React.FC<PageantShowdownProps> = ({ game: gamePr
             payoutAmount={getTotalPayout()}
             leftKoda={matchup.left}
             rightKoda={matchup.right}
+            sideSelectionEnabled={currentView === 0 && !isLoading && !gameState.isRevealing}
+            onSelectSide={(side) =>
+                setGameState((prev) => ({ ...prev, chosenSide: side }))
+            }
         />
     );
 
     return (
         <div>
-            <div className="flex flex-col lg:flex-row gap-4 sm:gap-8 lg:gap-10">
+            <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 sm:gap-8 lg:gap-10">
+                <div className="min-w-0 w-full h-full lg:basis-2/3 lg:self-stretch">
                 <GameWindow
                     game={game}
                     currentGameId={currentGameId}
@@ -246,8 +251,11 @@ const PageantShowdownComponent: React.FC<PageantShowdownProps> = ({ game: gamePr
                 >
                     {gameWindowContent}
                 </GameWindow>
+                </div>
 
+                <div className="flex min-w-0 w-full flex-col lg:basis-1/3 lg:min-h-0 lg:self-stretch">
                 <PageantShowdownSetupCard {...setupCardProps} placement="sidebar" />
+                </div>
             </div>
         </div>
     );
