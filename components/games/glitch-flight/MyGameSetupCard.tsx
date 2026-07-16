@@ -96,6 +96,38 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
     const liveColor =
         round.phase === "crashed" ? "#f87171" : round.multiplier < 2 ? "#00FF94" : round.multiplier < 5 ? "#fde047" : "#fb923c";
 
+    const launchButton = (className = "") => (
+        <button
+            type="button"
+            onClick={onPlay}
+            disabled={!canPlaceBet}
+            className={`w-full rounded-xl bg-white py-3.5 gf-mono text-sm font-black uppercase tracking-[0.2em] text-black transition-colors hover:bg-white/85 disabled:opacity-30 disabled:hover:bg-white ${className}`}
+        >
+            Launch Flight
+        </button>
+    );
+
+    const gameOverActionButtons = () => (
+        <div className="flex flex-col gap-3">
+            <button
+                type="button"
+                onClick={onPlayAgain}
+                disabled={isGamePaused}
+                className="w-full rounded-xl bg-white py-3.5 gf-mono text-sm font-black uppercase tracking-[0.2em] text-black transition-colors hover:bg-white/85 disabled:opacity-30"
+            >
+                {playAgainText}
+            </button>
+
+            <button
+                type="button"
+                onClick={onReset}
+                className="w-full rounded-xl border border-white/15 bg-transparent py-3 gf-mono text-xs font-black uppercase tracking-[0.2em] text-white/60 transition-colors hover:border-white/30 hover:text-white"
+            >
+                Change Bet
+            </button>
+        </div>
+    );
+
     return (
         <div
             className="lg:basis-1/3 rounded-2xl border border-white/10 bg-[#0c1519]/70 backdrop-blur-md p-5 sm:p-6 flex flex-col text-white selection:bg-white/20"
@@ -109,6 +141,10 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
 
             {currentView === 0 && (
                 <>
+                    <div className="shrink-0 lg:hidden mb-4">
+                        {launchButton()}
+                    </div>
+
                     <BetAmountInput
                         min={0}
                         max={Math.min(maxBet, walletBalance)}
@@ -172,14 +208,7 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
                         <StatRow label="Max Bet Per Flight" value={`${maxBet.toLocaleString([], { maximumFractionDigits: 0 })} APE`} />
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={onPlay}
-                        disabled={!canPlaceBet}
-                        className="mt-6 w-full rounded-xl bg-white py-3.5 gf-mono text-sm font-black uppercase tracking-[0.2em] text-black transition-colors hover:bg-white/85 disabled:opacity-30 disabled:hover:bg-white"
-                    >
-                        Launch Flight
-                    </button>
+                    {launchButton("hidden lg:block mt-6")}
                 </>
             )}
 
@@ -233,6 +262,10 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
 
             {currentView === 2 && (
                 <>
+                    <div className="shrink-0 lg:hidden mb-4">
+                        {gameOverActionButtons()}
+                    </div>
+
                     <div className="rounded-[8px] border border-white/10 bg-gray-900/40 p-4 flex flex-col gap-2">
                         <StatRow label="Bet Amount" value={formatApe(betAmount)} />
                         <StatRow
@@ -246,25 +279,10 @@ const MyGameSetupCard: React.FC<MyGameSetupCardProps> = ({
                         )}
                     </div>
 
-                    <div className="grow" />
+                    <div className="grow hidden lg:block" />
 
-                    <div className="mt-8 flex flex-col gap-3">
-                        <button
-                            type="button"
-                            onClick={onPlayAgain}
-                            disabled={isGamePaused}
-                            className="w-full rounded-xl bg-white py-3.5 gf-mono text-sm font-black uppercase tracking-[0.2em] text-black transition-colors hover:bg-white/85 disabled:opacity-30"
-                        >
-                            {playAgainText}
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={onReset}
-                            className="w-full rounded-xl border border-white/15 bg-transparent py-3 gf-mono text-xs font-black uppercase tracking-[0.2em] text-white/60 transition-colors hover:border-white/30 hover:text-white"
-                        >
-                            Change Bet
-                        </button>
+                    <div className="hidden lg:flex mt-8 flex-col gap-3">
+                        {gameOverActionButtons()}
                     </div>
                 </>
             )}
