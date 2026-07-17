@@ -31,8 +31,12 @@ import ChickenCrossingComponent from '@/components/games/chicken-crossing/Chicke
 import { chickenGame as ChickenCrossingConfig } from '@/components/games/chicken-crossing/chickenGameConfig'
 import LootTumbleComponent from '@/components/games/loot-tumble/LootTumble'
 import { lootTumbleGame as LootTumbleConfig } from '@/components/games/loot-tumble/lootTumbleConfig'
+import OvertimeZombieComponent from '@/components/games/overtime-zombie/OvertimeZombie'
+import { overtimeZombieGame as OvertimeZombieConfig } from '@/components/games/overtime-zombie/overtimeZombieConfig'
 import SwampHopComponent from '@/components/games/swamp-hop/SwampHop'
 import { swampHop as SwampHopConfig } from '@/components/games/swamp-hop/swampHopConfig'
+import PageantShowdownComponent from '@/components/games/pageant-showdown/PageantShowdown'
+import { pageantShowdown as PageantShowdownConfig } from '@/components/games/pageant-showdown/pageantShowdownConfig'
 import LegendOfTheGoldCubComponent from '@/components/games/legend-of-the-gold-cub/MyGame'
 import { goldCubGame as LegendOfTheGoldCubConfig } from '@/components/games/legend-of-the-gold-cub/myGameConfig'
 import CrashOrCashOutComponent from '@/components/games/crash-or-cash-out/MyGame'
@@ -64,7 +68,9 @@ const gameRegistry: Record<string, RegisteredGameComponent> = {
   'street-looker': () => createElement(StreetLookerComponent as RegisteredGameComponent, { game: StreetLookerConfig }),
   'chicken-crossing': () => createElement(ChickenCrossingComponent as RegisteredGameComponent, { game: ChickenCrossingConfig }),
   'loot-tumble': () => createElement(LootTumbleComponent as RegisteredGameComponent, { game: LootTumbleConfig }),
+  'overtime-zombie': () => createElement(OvertimeZombieComponent as RegisteredGameComponent, { game: OvertimeZombieConfig }),
   'swamp-hop': () => createElement(SwampHopComponent as RegisteredGameComponent, { game: SwampHopConfig }),
+  'pageant-showdown': () => createElement(PageantShowdownComponent as RegisteredGameComponent, { game: PageantShowdownConfig }),
   'legend-of-the-gold-cub': () => createElement(LegendOfTheGoldCubComponent as RegisteredGameComponent, { game: LegendOfTheGoldCubConfig }),
   'crash-or-cash-out': () => createElement(CrashOrCashOutComponent as RegisteredGameComponent, { game: CrashOrCashOutConfig }),
   'minefield-path': () => createElement(MinefieldPathComponent as RegisteredGameComponent, { game: MinefieldPathConfig }),
